@@ -14,6 +14,8 @@ const State = {
 const Commands = {
     OPEN: 'open',
     CLOSE: 'close',
+    UP: 'up',
+    DOWN: 'down',
     MY: 'my',
 };
 
@@ -139,9 +141,11 @@ class UpDownScreen extends AbstractDevice {
 
         switch (command) {
             case Commands.OPEN:
+            case Commands.UP:
             case Commands.MY:
                 return State.OPEN;
             case Commands.CLOSE:
+            case Commands.DOWN:
             default:
                 return State.CLOSED;
         }
