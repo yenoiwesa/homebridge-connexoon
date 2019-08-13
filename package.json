@@ -1,0 +1,33 @@
+{
+    "name": "homebridge-connexoon",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "start": "homebridge -D -U ./homebridge-home -P .",
+        "debug": "ndb npm start",
+        "lint": "eslint ."
+    },
+    "keywords": [
+        "homebridge-plugin",
+        "homebridge",
+        "somfy",
+        "connexoon"
+    ],
+    "author": "Matthieu Di Berardino",
+    "license": "ISC",
+    "devDependencies": {
+        "eslint": "^6.1.0",
+        "homebridge": "^0.4.50",
+        "ndb": "^1.1.4"
+    },
+    "engines": {
+        "node": ">=10.0.0",
+        "homebridge": ">=0.4.0"
+    },
+    "dependencies": {
+        "lodash": "^4.17.15",
+        "request": "^2.88.0",
+        "request-promise-native": "^1.0.7"
+    }
+}

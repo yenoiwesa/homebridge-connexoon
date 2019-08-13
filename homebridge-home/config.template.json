@@ -1,0 +1,19 @@
+{
+    "bridge": {
+        "name": "Homebridge Test",
+        "username": "CC:22:3D:E3:CE:30",
+        "port": 51888,
+        "pin": "239-67-784"
+    },
+
+    "description": "This is a test homebridge configuration for development purpose.",
+
+    "platforms": [
+        {
+            "platform": "Connexoon",
+            "name": "Connexoon",
+            "username": "somfy account username",
+            "password": "somfy account password"
+        }
+    ]
+}
