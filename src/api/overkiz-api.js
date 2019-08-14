@@ -1,6 +1,7 @@
 const request = require('request-promise-native').defaults({ jar: true });
 const { cachePromise } = require('../utils');
 const { Execution } = require('./execution');
+const Device = require('./device');
 
 const SERVER = {
     Cozytouch: 'ha110-1.overkiz.com',
@@ -29,7 +30,7 @@ class OverkizAPI {
 
         this.getCurrentExecutions = cachePromise(
             this.doGetCurrentExecutions.bind(this),
-            2 * 1000
+            1000
         ).exec;
 
         this.getExecutionsHistory = cachePromise(
@@ -92,12 +93,14 @@ class OverkizAPI {
 
     async listDevices() {
         try {
-            return await this.sendRequestWithLogin(() =>
+            const jsonDevices = await this.sendRequestWithLogin(() =>
                 request.get({
                     url: this.getUrlForQuery('/setup/devices'),
                     json: true,
                 })
             );
+
+            return jsonDevices.map(json => new Device(json, this));
         } catch (result) {
             this.log.error('Failed to get device list', result.error);
 
@@ -148,6 +151,23 @@ class OverkizAPI {
             );
         } catch (result) {
             this.log.error('Failed to exec command', result.error);
+
+            throw result;
+        }
+    }
+
+    async cancelExecution(execId) {
+        this.log.debug('Cancelling execution', execId);
+
+        try {
+            return await this.sendRequestWithLogin(() =>
+                request.delete({
+                    url: this.getUrlForQuery(`/exec/current/setup/${execId}`),
+                    json: true,
+                })
+            );
+        } catch (result) {
+            this.log.error('Failed to cancel command', execId, result.error);
 
             throw result;
         }

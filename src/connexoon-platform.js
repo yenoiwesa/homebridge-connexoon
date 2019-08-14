@@ -1,5 +1,5 @@
 const OverkizAPI = require('./api/overkiz-api');
-const DeviceMapping = require('./device-mapping');
+const AccessoryMapping = require('./accessory-mapping');
 
 let homebridge;
 
@@ -30,25 +30,22 @@ class ConnexoonPlatform {
     async accessories(callback) {
         // retrieve accessories defined in overkiz
         try {
-            const apiDevices = await this.overkiz.listDevices();
+            const devices = await this.overkiz.listDevices();
 
-            for (const apiDevice of apiDevices) {
-                const deviceType = apiDevice.widget;
-
+            for (const device of devices) {
                 // unsupported device types are skipped
-                if (deviceType in DeviceMapping) {
-                    const deviceClass = DeviceMapping[deviceType];
+                if (device.type in AccessoryMapping) {
+                    const accessoryClass = AccessoryMapping[device.type];
 
-                    const device = new deviceClass({
+                    const accessory = new accessoryClass({
                         homebridge,
                         log: this.log,
-                        device: apiDevice,
-                        overkiz: this.overkiz,
+                        device,
                     });
 
-                    this.platformAccessories.push(device.accessory);
+                    this.platformAccessories.push(accessory.homekitAccessory);
                 } else {
-                    this.log.debug(`Ignored device of type ${deviceType}`);
+                    this.log.debug(`Ignored device of type ${device.type}`);
                 }
             }
             this.log.debug(`Found ${this.platformAccessories.length} devices`);

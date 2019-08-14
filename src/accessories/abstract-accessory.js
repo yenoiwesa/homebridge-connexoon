@@ -1,8 +1,7 @@
 class AbstractDevice {
-    constructor({ homebridge, log, device, overkiz }) {
+    constructor({ homebridge, log, device }) {
         this.device = device;
         this.log = log;
-        this.overkiz = overkiz;
 
         const UUIDGen = homebridge.hap.uuid;
         const Service = homebridge.hap.Service;
@@ -11,44 +10,35 @@ class AbstractDevice {
         const informationService = new Service.AccessoryInformation();
         informationService.setCharacteristic(
             Characteristic.Manufacturer,
-            this.manufacturer
+            this.device.manufacturer
         );
-        informationService.setCharacteristic(Characteristic.Model, this.model);
+        informationService.setCharacteristic(
+            Characteristic.Model,
+            this.device.model
+        );
         informationService.setCharacteristic(
             Characteristic.SerialNumber,
-            this.id
+            this.device.id
         );
 
-        this.accessory = {
+        this.homekitAccessory = {
             name: this.name,
             displayName: this.name,
-            uuid_base: UUIDGen.generate(this.id),
+            uuid_base: UUIDGen.generate(this.device.id),
             services: [informationService],
-            getServices: () => this.accessory.services,
+            getServices: () => this.homekitAccessory.services,
         };
 
         this.log.debug(`Found ${this.constructor.name} ${this.name}`);
     }
 
     addService(service) {
-        this.accessory.services.push(service);
+        this.homekitAccessory.services.push(service);
         return service;
     }
 
     get name() {
-        return this.device.label;
-    }
-
-    get manufacturer() {
-        return 'Somfy';
-    }
-
-    get model() {
-        return this.device.definition.uiClass;
-    }
-
-    get id() {
-        return this.device.deviceURL;
+        return this.device.name;
     }
 }
 
