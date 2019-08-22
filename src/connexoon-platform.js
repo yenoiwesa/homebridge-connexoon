@@ -1,3 +1,4 @@
+const { get } = require('lodash');
 const OverkizAPI = require('./api/overkiz-api');
 const AccessoryMapping = require('./accessory-mapping');
 
@@ -37,10 +38,14 @@ class ConnexoonPlatform {
                 if (device.type in AccessoryMapping) {
                     const accessoryClass = AccessoryMapping[device.type];
 
+                    // retrieve accessory config
+                    const config = get(this.config, ['devices', device.name]);
+
                     const accessory = new accessoryClass({
                         homebridge,
                         log: this.log,
                         device,
+                        config,
                     });
 
                     this.platformAccessories.push(accessory.homekitAccessory);

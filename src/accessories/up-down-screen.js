@@ -46,8 +46,8 @@ const targetToCommand = target => {
 };
 
 class UpDownScreen extends AbstractDevice {
-    constructor({ homebridge, log, device }) {
-        super({ homebridge, log, device });
+    constructor({ homebridge, log, device, config }) {
+        super({ homebridge, log, device, config });
 
         // Service and Characteristic are from hap-nodejs
         Service = homebridge.hap.Service;

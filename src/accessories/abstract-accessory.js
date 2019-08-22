@@ -1,7 +1,8 @@
 class AbstractDevice {
-    constructor({ homebridge, log, device }) {
+    constructor({ homebridge, log, device, config }) {
         this.device = device;
         this.log = log;
+        this.config = config;
 
         const UUIDGen = homebridge.hap.uuid;
         const Service = homebridge.hap.Service;
