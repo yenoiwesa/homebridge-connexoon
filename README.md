@@ -91,7 +91,7 @@ Up Down Screens (such as window blinds) accept the following configuration:
 
 Note that the above configuration is the default for an Up Down Screen, and thus does not need to declared in the homebridge configuration file to use the default.
 
-#### `positions` - Array - Optional
+#### `commands` - Array - Optional
 
 An Array of Objects mapping RTS commands (one of `open`, `my`, `close`) to homekit window covering positions (integer from `0` to `100`), and vice versa.
 
@@ -130,7 +130,7 @@ I have created this homebridge plugin for my personal use, and thus it fits the 
 
 Currently, the platform only supports devices of the following type:
 
--   Up Down Screen
+-   **Up Down Screen**
 
 Support for more types will be added as needed.
 
