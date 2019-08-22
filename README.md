@@ -35,19 +35,17 @@ To configure homebridge-connexoon, add the `Connexoon` platform to the `platform
 
 ```json
 {
-    "bridge": {
-        ...
-    },
+    "bridge": { "...": "..." },
 
     "description": "...",
 
-    "platforms":[
+    "platforms": [
         {
             "platform": "Connexoon",
             "name": "My Connexoon Hub",
 
             "username": "<Somfy account username>",
-            "password": "<Somfy account passowrd>",
+            "password": "<Somfy account passowrd>"
         }
     ]
 }
@@ -72,10 +70,10 @@ Up Down Screens (such as window blinds) accept the following configuration:
 
 ```json
 {
-    "platforms":[
+    "platforms": [
         {
             "platform": "Connexoon",
-                ...
+            "...": "...",
 
             "devices": {
                 "Bedroom Blind": {
@@ -83,7 +81,7 @@ Up Down Screens (such as window blinds) accept the following configuration:
                         { "command": "open", "position": 100 },
                         { "command": "my", "position": 50 },
                         { "command": "close", "position": 0 }
-                    ],
+                    ]
                 }
             }
         }
