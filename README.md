@@ -136,7 +136,7 @@ Currently, the platform only supports devices of the following type:
 
 -   **Screen**
 
-Support for more types will be added as needed.
+Support for more types may be added as needed.
 
 In addition, since the RTS protocol is one-way, devices status is unknown and must be inferred from the last command that was submitted to the device.
 
