@@ -1,5 +1,5 @@
 <p align="center">
-    <img href="documentation/logo.png" height="100" width="100">
+    <img src="documentation/logo.png" width="300" alt="Connexoon logo">
 </p>
 
 # Homebridge Connexoon
