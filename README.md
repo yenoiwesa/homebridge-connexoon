@@ -1,4 +1,8 @@
-# homebridge-connexoon
+<p align="center">
+    <img href="documentation/logo.png" height="100" width="100">
+</p>
+
+# Homebridge Connexoon
 
 A Homebridge plugin providing support for the **Connexoon** (Somfy), **TaHoma** (Somfy) and **Cozytouch** (Atlantic, Thermor, Sauter) platforms and accessories.
 
