@@ -1,6 +1,6 @@
 const { get } = require('lodash');
 const { cachePromise } = require('../utils');
-const AbstractDevice = require('./abstract-accessory');
+const AbstractService = require('./abstract-service');
 
 let Service;
 let Characteristic;
@@ -24,7 +24,7 @@ const DEFAULT_COMMANDS = [
     { command: Command.CLOSE, position: Position.CLOSED },
 ];
 
-class UpDownScreen extends AbstractDevice {
+class WindowCovering extends AbstractService {
     constructor({ homebridge, log, device, config }) {
         super({ homebridge, log, device, config });
 
@@ -42,11 +42,9 @@ class UpDownScreen extends AbstractDevice {
         this.commands = get(this.config, 'commands', []).concat(
             DEFAULT_COMMANDS
         );
-
-        this.buildServices();
     }
 
-    buildServices() {
+    getHomekitService() {
         // Window Covering Service
         const service = new Service.WindowCovering(this.name);
 
@@ -69,10 +67,7 @@ class UpDownScreen extends AbstractDevice {
         // set default value
         this.positionState.updateValue(Characteristic.PositionState.STOPPED);
 
-        this.addService(service);
-
-        // refresh values
-        this.targetPosition.getValue();
+        return service;
     }
 
     async getTargetPosition(callback) {
@@ -180,4 +175,4 @@ class UpDownScreen extends AbstractDevice {
     }
 }
 
-module.exports = UpDownScreen;
+module.exports = WindowCovering;

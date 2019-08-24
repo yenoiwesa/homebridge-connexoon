@@ -1,8 +1,7 @@
-class AbstractDevice {
-    constructor({ homebridge, log, device, config }) {
+class Accessory {
+    constructor({ homebridge, log, device }) {
         this.device = device;
         this.log = log;
-        this.config = config;
 
         const UUIDGen = homebridge.hap.uuid;
         const Service = homebridge.hap.Service;
@@ -43,4 +42,4 @@ class AbstractDevice {
     }
 }
 
-module.exports = AbstractDevice;
+module.exports = Accessory;

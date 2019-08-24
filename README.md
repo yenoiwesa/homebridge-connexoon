@@ -64,9 +64,9 @@ The platform can be configured with the following parameters:
 
 Each device can receive additional configurations according to its device type registered in the Connexoon app (or equivalent).
 
-### Up Down Screens
+### Screens
 
-Up Down Screens (such as window blinds) accept the following configuration:
+Screens (such as window blinds) accept the `commands` configuration:
 
 ```json
 {
@@ -89,7 +89,7 @@ Up Down Screens (such as window blinds) accept the following configuration:
 }
 ```
 
-Note that the above configuration is the default for an Up Down Screen, and thus does not need to declared in the homebridge configuration file to use the default.
+Note that the above configuration is the default for a Screen, and thus does not need to declared in the homebridge configuration file to use the default.
 
 #### `commands` - Array - Optional
 
@@ -130,7 +130,7 @@ I have created this homebridge plugin for my personal use, and thus it fits the 
 
 Currently, the platform only supports devices of the following type:
 
--   **Up Down Screen**
+-   **Screen**
 
 Support for more types will be added as needed.
 

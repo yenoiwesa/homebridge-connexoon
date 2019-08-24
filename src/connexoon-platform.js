@@ -1,6 +1,7 @@
 const { get } = require('lodash');
 const OverkizAPI = require('./api/overkiz-api');
-const AccessoryMapping = require('./accessory-mapping');
+const Accessory = require('./accessory');
+const ServicesMapping = require('./services-mapping');
 
 let homebridge;
 
@@ -29,24 +30,34 @@ class ConnexoonPlatform {
      * Called by Homebridge at platform init to list accessories.
      */
     async accessories(callback) {
-        // retrieve accessories defined in overkiz
+        // retrieve devices defined in overkiz
         try {
             const devices = await this.overkiz.listDevices();
 
             for (const device of devices) {
                 // unsupported device types are skipped
-                if (device.type in AccessoryMapping) {
-                    const accessoryClass = AccessoryMapping[device.type];
+                if (device.type in ServicesMapping) {
+                    const accessory = new Accessory({
+                        homebridge,
+                        log: this.log,
+                        device,
+                    });
+
+                    const serviceClasses = ServicesMapping[device.type];
 
                     // retrieve accessory config
                     const config = get(this.config, ['devices', device.name]);
 
-                    const accessory = new accessoryClass({
-                        homebridge,
-                        log: this.log,
-                        device,
-                        config,
-                    });
+                    for (const serviceClass of serviceClasses) {
+                        const service = new serviceClass({
+                            homebridge,
+                            log: this.log,
+                            device,
+                            config,
+                        });
+
+                        accessory.addService(service.getHomekitService());
+                    }
 
                     this.platformAccessories.push(accessory.homekitAccessory);
                 } else {
