@@ -1,15 +1,16 @@
+const { get } = require('lodash');
 const { cachePromise } = require('../utils');
-const AbstractDevice = require('./abstract-accessory');
+const AbstractService = require('./abstract-service');
 
 let Service;
 let Characteristic;
 
-const State = {
+const Position = {
     CLOSED: 0,
     OPEN: 100,
 };
 
-const Commands = {
+const Command = {
     OPEN: 'open',
     CLOSE: 'close',
     UP: 'up',
@@ -17,37 +18,15 @@ const Commands = {
     MY: 'my',
 };
 
-const commandToPosition = command => {
-    if (!command) {
-        return State.CLOSED;
-    }
+const DEFAULT_COMMANDS = [
+    { command: Command.OPEN, position: Position.OPEN },
+    { command: Command.MY, position: 50 },
+    { command: Command.CLOSE, position: Position.CLOSED },
+];
 
-    switch (command) {
-        case Commands.OPEN:
-        case Commands.UP:
-        case Commands.MY:
-            return State.OPEN;
-        case Commands.CLOSE:
-        case Commands.DOWN:
-        default:
-            return State.CLOSED;
-    }
-};
-
-const targetToCommand = target => {
-    if (target === State.OPEN) {
-        return Commands.MY;
-    } else if (target === State.CLOSED) {
-        return Commands.CLOSE;
-    }
-
-    // ignore values that are half open
-    return null;
-};
-
-class UpDownScreen extends AbstractDevice {
-    constructor({ homebridge, log, device }) {
-        super({ homebridge, log, device });
+class WindowCovering extends AbstractService {
+    constructor({ homebridge, log, device, config }) {
+        super({ homebridge, log, device, config });
 
         // Service and Characteristic are from hap-nodejs
         Service = homebridge.hap.Service;
@@ -58,10 +37,14 @@ class UpDownScreen extends AbstractDevice {
             2 * 1000
         ).exec;
 
-        this.buildServices();
+        // appending the default commands to the overridden one so that
+        // the overridden command take precedence during evaluation
+        this.commands = get(this.config, 'commands', []).concat(
+            DEFAULT_COMMANDS
+        );
     }
 
-    buildServices() {
+    getHomekitService() {
         // Window Covering Service
         const service = new Service.WindowCovering(this.name);
 
@@ -84,10 +67,7 @@ class UpDownScreen extends AbstractDevice {
         // set default value
         this.positionState.updateValue(Characteristic.PositionState.STOPPED);
 
-        this.addService(service);
-
-        // refresh values
-        this.targetPosition.getValue();
+        return service;
     }
 
     async getTargetPosition(callback) {
@@ -116,13 +96,13 @@ class UpDownScreen extends AbstractDevice {
 
     async doGetPositions() {
         const lastCommand = await this.device.getLastCommand();
-        const position = commandToPosition(lastCommand);
+        const position = this.commandToPosition(lastCommand);
 
         return { current: position, target: position };
     }
 
     async setPosition(value, callback) {
-        const command = targetToCommand(value);
+        const command = this.targetToCommand(value);
 
         this.log(
             `Set position to ${value} for ${this.name} with command ${command}`
@@ -136,20 +116,22 @@ class UpDownScreen extends AbstractDevice {
 
         this.updatePositionState(value);
 
+        // return early for Siri to acknowledge asap
+        // even though the command might fail later
+        callback();
+
         try {
             await this.device.cancelCurrentExecution();
 
             await this.device.executeCommand(command);
 
+            // set the final requested position after 6s
             setTimeout(() => {
                 this.currentPosition.updateValue(value);
                 this.updatePositionState(value);
-            }, 6000);
-
-            callback();
+            }, 6 * 1000);
         } catch (error) {
             this.log.error('Failed to execute command', error);
-            callback(error);
         }
     }
 
@@ -167,6 +149,30 @@ class UpDownScreen extends AbstractDevice {
 
         this.positionState.updateValue(positionState);
     }
+
+    commandToPosition(command) {
+        // map UP and DOWN commands to OPEN and CLOSE
+        switch (command) {
+            case Command.UP:
+                command = Command.OPEN;
+                break;
+            case Command.DOWN:
+                command = Command.CLOSE;
+                break;
+        }
+
+        const configItem = this.commands.find(item => item.command === command);
+        return get(configItem, 'position', Position.CLOSED);
+    }
+
+    targetToCommand(target) {
+        // there is no default command, simply ignore values
+        // that are not mapped (won't send anything)
+        return get(
+            this.commands.find(item => item.position === target),
+            'command'
+        );
+    }
 }
 
-module.exports = UpDownScreen;
+module.exports = WindowCovering;

@@ -1,7 +1,7 @@
 {
     "name": "homebridge-connexoon",
     "version": "1.0.0",
-    "description": "",
+    "description": "A Homebridge plugin providing support for the Connexoon, TaHoma and Cozytouch platforms and accessories.",
     "main": "index.js",
     "scripts": {
         "start": "homebridge -D -U ./homebridge-home -P .",
@@ -12,10 +12,11 @@
         "homebridge-plugin",
         "homebridge",
         "somfy",
-        "connexoon"
+        "connexoon",
+        "tahoma"
     ],
     "author": "Matthieu Di Berardino",
-    "license": "ISC",
+    "license": "Apache 2",
     "devDependencies": {
         "eslint": "^6.1.0",
         "homebridge": "^0.4.50",
@@ -29,5 +30,13 @@
         "lodash": "^4.17.15",
         "request": "^2.88.0",
         "request-promise-native": "^1.0.7"
+    },
+    "homepage": "https://github.com/yenoiwesa/homebridge-connexoon#readme",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/yenoiwesa/homebridge-connexoon.git"
+    },
+    "bugs": {
+        "url": "http://github.com/yenoiwesa/homebridge-connexoon/issues"
     }
 }

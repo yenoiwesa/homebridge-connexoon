@@ -1,4 +1,4 @@
-class AbstractDevice {
+class Accessory {
     constructor({ homebridge, log, device }) {
         this.device = device;
         this.log = log;
@@ -42,4 +42,4 @@ class AbstractDevice {
     }
 }
 
-module.exports = AbstractDevice;
+module.exports = Accessory;

@@ -12,7 +12,7 @@ class Device {
     }
 
     get type() {
-        return this.json.widget;
+        return this.json.uiClass;
     }
 
     get name() {
@@ -24,7 +24,7 @@ class Device {
     }
 
     get model() {
-        return this.json.definition.uiClass;
+        return this.json.widget;
     }
 
     async getCurrentExecution() {
