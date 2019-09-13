@@ -77,7 +77,6 @@ class WindowCovering extends AbstractService {
             this.log.debug(`Target position for ${this.name} is ${target}`);
             callback(null, target);
         } catch (error) {
-            this.log.error(error);
             callback(error);
         }
     }
@@ -89,7 +88,6 @@ class WindowCovering extends AbstractService {
             this.log.debug(`Current position for ${this.name} is ${current}`);
             callback(null, current);
         } catch (error) {
-            this.log.error(error);
             callback(error);
         }
     }
@@ -131,7 +129,7 @@ class WindowCovering extends AbstractService {
                 this.updatePositionState(value);
             }, 6 * 1000);
         } catch (error) {
-            this.log.error('Failed to execute command', error);
+            this.log.error('Failed to execute command');
         }
     }
 
