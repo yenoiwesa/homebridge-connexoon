@@ -49,7 +49,7 @@ To configure homebridge-connexoon, add the `Connexoon` platform to the `platform
             "name": "My Connexoon Hub",
 
             "username": "<Somfy account username>",
-            "password": "<Somfy account passowrd>"
+            "password": "<Somfy account password>"
         }
     ]
 }
