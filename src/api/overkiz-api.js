@@ -1,39 +1,12 @@
-const request = require('request-promise-native');
 const { cachePromise } = require('../utils');
 const { Execution } = require('./execution');
 const Device = require('./device');
-
-const SERVER = {
-    Cozytouch: 'ha110-1.overkiz.com',
-    TaHoma: 'tahomalink.com',
-    Connexoon: 'tahomalink.com',
-    ConnexoonRTS: 'ha201-1.overkiz.com',
-};
-
-const SOMFY_OAUTH_URL = 'https://accounts.somfy.com/oauth/oauth/v2/token';
-const SOMFY_OAUTH_CLIENT_ID =
-    '0d8e920c-1478-11e7-a377-02dd59bd3041_1ewvaqmclfogo4kcsoo0c8k4kso884owg08sg8c40sk4go4ksg';
-const SOMFY_OAUTH_CLIENT_SECRET =
-    '12k73w1n540g8o4cokg0cw84cog840k84cwggscwg884004kgk';
-
-const SESSION_TIMEOUT = 3600 * 1000;
+const RequestHandler = require('./request-handler');
 
 class OverkizAPI {
-    constructor({ username, password, service = 'ConnexoonRTS' }, log) {
-        this.username = username;
-        this.password = password;
-        this.service = service;
-        this.server = SERVER[service];
+    constructor(config, log) {
+        this.handler = new RequestHandler(config, log);
         this.log = log;
-        this.request = request;
-
-        // cached version of methods
-        const { exec, reset } = cachePromise(
-            this.doLogin.bind(this),
-            SESSION_TIMEOUT
-        );
-        this.login = exec;
-        this.resetLogin = reset;
 
         this.getCurrentExecutions = cachePromise(
             this.doGetCurrentExecutions.bind(this),
@@ -47,75 +20,17 @@ class OverkizAPI {
     }
 
     getUrlForQuery(query) {
-        return `https://${this.server}/enduser-mobile-web/enduserAPI${query}`;
-    }
-
-    async doLogin() {
-        // check that credentials are provided
-        if (!this.username || !this.password) {
-            this.log.error(
-                `Username and password must be defined as configuration.`
-            );
-            return Promise.reject();
-        }
-
-        this.log.debug(`Connecting ${this.service} server...`);
-
-        try {
-            const result = await this.request.post({
-                url: SOMFY_OAUTH_URL,
-                form: {
-                    grant_type: 'password',
-                    username: this.username,
-                    password: this.password,
-                    client_id: SOMFY_OAUTH_CLIENT_ID,
-                    client_secret: SOMFY_OAUTH_CLIENT_SECRET,
-                },
-                json: true,
-            });
-
-            this.log.debug('Logged in successfully');
-
-            // store the oauth access token as default
-            // to the request object
-            this.request = this.request.defaults({
-                auth: {
-                    bearer: result['access_token'],
-                },
-            });
-
-            return result;
-        } catch (result) {
-            this.log.error('Failed to login', result.error);
-
-            // forward login error
-            throw result;
-        }
-    }
-
-    async sendRequestWithLogin(sendRequest, attempted = false) {
-        await this.login();
-
-        try {
-            return await sendRequest();
-        } catch (result) {
-            const { response } = result;
-            if (response && response.statusCode === 401 && !attempted) {
-                this.resetLogin();
-                return this.sendRequestWithLogin(sendRequest, true);
-            }
-
-            throw result;
-        }
+        return this.handler.server.getUrlForQuery(query);
     }
 
     async listDevices() {
         try {
-            const jsonDevices = await this.sendRequestWithLogin(() =>
-                this.request.get({
-                    url: this.getUrlForQuery('/setup/devices'),
-                    json: true,
-                })
+            const jsonDevices = await this.handler.sendRequestWithLogin(
+                request =>
+                    request.get({
+                        url: this.getUrlForQuery('/setup/devices'),
+                        json: true,
+                    })
             );
 
             return jsonDevices.map(json => new Device(json, this));
@@ -128,8 +43,8 @@ class OverkizAPI {
 
     async doGetCurrentExecutions() {
         try {
-            return await this.sendRequestWithLogin(() =>
-                this.request.get({
+            return await this.handler.sendRequestWithLogin(request =>
+                request.get({
                     url: this.getUrlForQuery('/exec/current'),
                     json: true,
                 })
@@ -143,8 +58,8 @@ class OverkizAPI {
 
     async doGetExecutionsHistory() {
         try {
-            return await this.sendRequestWithLogin(() =>
-                this.request.get({
+            return await this.handler.sendRequestWithLogin(request =>
+                request.get({
                     url: this.getUrlForQuery('/history/executions'),
                     json: true,
                 })
@@ -160,8 +75,8 @@ class OverkizAPI {
         const execution = new Execution(label, deviceURL, commands);
 
         try {
-            return await this.sendRequestWithLogin(() =>
-                this.request.post({
+            return await this.handler.sendRequestWithLogin(request =>
+                request.post({
                     url: this.getUrlForQuery('/exec/apply'),
                     json: true,
                     body: execution,
@@ -178,8 +93,8 @@ class OverkizAPI {
         this.log.debug('Cancelling execution', execId);
 
         try {
-            return await this.sendRequestWithLogin(() =>
-                this.request.delete({
+            return await this.handler.sendRequestWithLogin(request =>
+                request.delete({
                     url: this.getUrlForQuery(`/exec/current/setup/${execId}`),
                     json: true,
                 })
