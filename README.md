@@ -68,9 +68,9 @@ The platform can be configured with the following parameters:
 
 Each device can receive additional configurations according to its device type registered in the Connexoon app (or equivalent).
 
-### Screens
+### Window Coverings
 
-Screens (such as window blinds) accept the `commands` configuration:
+Screens (such as window blinds) and Roller Shutters accept the `commands` configuration:
 
 ```json
 {
@@ -135,6 +135,7 @@ I have created this homebridge plugin for my personal use, and thus it fits the 
 Currently, the platform only supports devices of the following type:
 
 -   **Screen**
+-   **Roller Shutter**
 
 Support for more types may be added as needed.
 
