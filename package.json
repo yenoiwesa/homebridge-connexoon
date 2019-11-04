@@ -20,7 +20,7 @@
     "devDependencies": {
         "eslint": "^6.1.0",
         "homebridge": "^0.4.50",
-        "ndb": "^1.1.4"
+        "ndb": "^1.1.5"
     },
     "engines": {
         "node": ">=10.0.0",
@@ -29,7 +29,7 @@
     "dependencies": {
         "lodash": "^4.17.15",
         "request": "^2.88.0",
-        "request-promise-native": "^1.0.7"
+        "request-promise-native": "^1.0.8"
     },
     "homepage": "https://github.com/yenoiwesa/homebridge-connexoon#readme",
     "repository": {
