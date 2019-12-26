@@ -2,11 +2,13 @@
     <img src="documentation/logo.png" width="300" alt="Connexoon logo">
 </p>
 
-# Homebridge Connexoon
+# Homebridge Connexoon for RTS
 
-A Homebridge plugin providing support for the **Connexoon** (Somfy), **TaHoma** (Somfy) and **Cozytouch** (Atlantic, Thermor, Sauter) platforms and accessories.
+A Homebridge plugin providing support for the **Connexoon** (Somfy), **TaHoma** (Somfy) and **Cozytouch** (Atlantic, Thermor, Sauter) platforms and accessories working over the RTS protocol.
 
 This plugin's implementation is inspired by and initially based on Romain Duboc's [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin.
+
+This plugin currently does not support Somfy IO devices, only RTS devices. Use the [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin if you have IO devices in your installation.
 
 # Requirements
 
@@ -132,7 +134,7 @@ In the configuration above, the `my` command is associated to the homekit positi
 
 I have created this homebridge plugin for my personal use, and thus it fits the purpose of my home's installation.
 
-Currently, the platform only supports devices of the following type:
+Currently, the platform only supports RTS devices of the following type:
 
 -   **Screen**
 -   **Roller Shutter**
