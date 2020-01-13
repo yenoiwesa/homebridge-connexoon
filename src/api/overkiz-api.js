@@ -1,11 +1,10 @@
 const { cachePromise } = require('../utils');
 const { Execution } = require('./execution');
 const Device = require('./device');
-const RequestHandler = require('./request-handler');
 
 class OverkizAPI {
-    constructor(config, log) {
-        this.handler = new RequestHandler(config, log);
+    constructor(requestHandler, log) {
+        this.requestHandler = requestHandler;
         this.log = log;
 
         this.getCurrentExecutions = cachePromise(
@@ -20,12 +19,12 @@ class OverkizAPI {
     }
 
     getUrlForQuery(query) {
-        return this.handler.server.getUrlForQuery(query);
+        return this.requestHandler.server.getUrlForQuery(query);
     }
 
     async listDevices() {
         try {
-            const jsonDevices = await this.handler.sendRequestWithLogin(
+            const jsonDevices = await this.requestHandler.sendRequestWithLogin(
                 request =>
                     request.get({
                         url: this.getUrlForQuery('/setup/devices'),
@@ -43,7 +42,7 @@ class OverkizAPI {
 
     async doGetCurrentExecutions() {
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.requestHandler.sendRequestWithLogin(request =>
                 request.get({
                     url: this.getUrlForQuery('/exec/current'),
                     json: true,
@@ -58,7 +57,7 @@ class OverkizAPI {
 
     async doGetExecutionsHistory() {
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.requestHandler.sendRequestWithLogin(request =>
                 request.get({
                     url: this.getUrlForQuery('/history/executions'),
                     json: true,
@@ -75,7 +74,7 @@ class OverkizAPI {
         const execution = new Execution(label, deviceURL, commands);
 
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.requestHandler.sendRequestWithLogin(request =>
                 request.post({
                     url: this.getUrlForQuery('/exec/apply'),
                     json: true,
@@ -93,7 +92,7 @@ class OverkizAPI {
         this.log.debug('Cancelling execution', execId);
 
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.requestHandler.sendRequestWithLogin(request =>
                 request.delete({
                     url: this.getUrlForQuery(`/exec/current/setup/${execId}`),
                     json: true,
