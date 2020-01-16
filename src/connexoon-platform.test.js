@@ -12,7 +12,7 @@ describe('connexion-platform', () => {
         connexoonPlatform._registerServices = jest.fn();
     });
 
-
+    
     test('initialization of the platform', () => {
         expect(connexoonPlatform.accessories).toBeTruthy();
     });
@@ -43,6 +43,32 @@ describe('connexion-platform', () => {
         });
     });
 
+    
+    test('Awning are registered', done => {
+        let listDevices = [
+            new Device({ uiClass: "Awning", label: "Awning", deviceURL: "6" }, null),
+        ];
+
+        mockOverkizApi.listDevices = jest.fn().mockResolvedValue(listDevices);
+        connexoonPlatform.accessories(accessories => {
+            expect(accessories).toHaveLength(1);
+            done();
+        });
+    });
+   
+/*
+    test('ExteriorVenetianBlind are registered', done => {
+        let listDevices = [
+            new Device({ uiClass: "ExteriorVenetianBlind", label: "ExteriorVenetianBlind", deviceURL: "6" }, null),
+        ];
+
+        mockOverkizApi.listDevices = jest.fn().mockResolvedValue(listDevices);
+        connexoonPlatform.accessories(accessories => {
+            expect(accessories).toHaveLength(1);
+            done();
+        });
+    });
+    */
 
     test('Unknown devices are ignored', done => {
         let listDevices = [

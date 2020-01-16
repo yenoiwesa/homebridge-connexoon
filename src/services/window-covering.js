@@ -42,32 +42,31 @@ class WindowCovering extends AbstractService {
         this.commands = get(this.config, 'commands', []).concat(
             DEFAULT_COMMANDS
         );
+
+        this.hapService = this._createHAPService();
+        this._mixinHAPServiceCharacteristics();
     }
 
-    getHomekitService() {
-        // Window Covering Service
-        const service = new Service.WindowCovering(this.name);
+    _createHAPService() {
+        return new Service.WindowCovering(this.name);
+    }
 
-        this.currentPosition = service.getCharacteristic(
-            Characteristic.CurrentPosition
-        );
-        this.targetPosition = service.getCharacteristic(
-            Characteristic.TargetPosition
-        );
-        this.positionState = service.getCharacteristic(
-            Characteristic.PositionState
-        );
-
+    _mixinHAPServiceCharacteristics() {
+        this.targetPosition = this.hapService.getCharacteristic(Characteristic.TargetPosition);
         this.targetPosition
             .on('get', this.getTargetPosition.bind(this))
             .on('set', this.setPosition.bind(this));
 
+        this.currentPosition = this.hapService.getCharacteristic(Characteristic.CurrentPosition);
         this.currentPosition.on('get', this.getCurrentPosition.bind(this));
 
         // set default value
+        this.positionState = this.hapService.getCharacteristic(Characteristic.PositionState);
         this.positionState.updateValue(Characteristic.PositionState.STOPPED);
+    }
 
-        return service;
+    getHomekitService() {
+        return this.hapService;
     }
 
     async getTargetPosition(callback) {
