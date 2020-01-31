@@ -83,11 +83,20 @@ describe('connexion-platform', () => {
     });
 
     function instantiateConnexoonPlatform() {
+        jest.mock('./service-factory', () => {
+            const mockService = { getHomekitService: jest.fn() }
+            let factory = function({homebridge, log, device, config}) {
+                return device.type == "Unknown" ? undefined : mockService;
+            }
+            return factory;
+        });
         jest.mock('./accessory', () => {
             class Accessory {
                 constructor({ homebridge, log, device }) {
                     this.device = device;
                     this.log = log;
+                    this.addService = jest.fn()
+                    this.homekitAccessory = {};
                 }
             }
             return Accessory;

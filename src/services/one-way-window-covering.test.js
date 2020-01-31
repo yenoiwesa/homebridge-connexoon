@@ -1,4 +1,4 @@
-const WindowCovering = require('./window-covering');
+const WindowCovering = require('./one-way-window-covering');
 
 describe('window-covering', () => {
     let mockDevice;

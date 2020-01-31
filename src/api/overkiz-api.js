@@ -40,6 +40,22 @@ class OverkizAPI {
         }
     }
 
+    async currentStates(deviceURL) {
+        try {
+            return await this.requestHandler.sendRequestWithLogin(request =>
+                request.get({
+                    url: this.getUrlForQuery(`/setup/devices/${encodeURI(deviceURL)}/states`),
+                    json: true
+                })
+            );
+        } catch (result) {
+            this.log.error(`Failed to get states for ${deciveURL} command`, result.error);
+
+            throw result;
+        }
+    }
+
+
     async doGetCurrentExecutions() {
         try {
             return await this.requestHandler.sendRequestWithLogin(request =>

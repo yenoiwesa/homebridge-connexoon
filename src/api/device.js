@@ -1,5 +1,6 @@
 const { get, startCase } = require('lodash');
 const { Command } = require('./execution');
+const DeviceStates = require('./device-states');
 
 class Device {
     constructor(json, overkiz) {
@@ -25,6 +26,10 @@ class Device {
 
     get model() {
         return this.json.widget;
+    }
+
+    get isTwoWay() {
+        return this.json.qualifiedName.startsWith('io:');
     }
 
     async getCurrentExecution() {
@@ -101,6 +106,18 @@ class Device {
 
             if (currentExec) {
                 return await this.cancelExecution(currentExec);
+            }
+        } catch (error) {
+            // ignore
+        }
+    }
+
+    async currentStates() {
+        try {
+            const states = await this.overkiz.getCurrentStates(this.id);
+
+            if (states) {
+                return new DeviceStates(states);
             }
         } catch (error) {
             // ignore

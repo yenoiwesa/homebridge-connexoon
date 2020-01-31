@@ -1,7 +1,7 @@
 const { get } = require('lodash');
+const serviceFactory = require('./service-factory');
 const overkizAPIFactory = require('./api/overkiz-api-factory');
 const Accessory = require('./accessory');
-const ServicesMapping = require('./services-mapping');
 
 let homebridge;
 
@@ -47,7 +47,10 @@ class ConnexoonPlatform {
     }
 
     _registerDevice(device) {
-        if (!(device.type in ServicesMapping)) {
+        const config = get(this.config, ['devices', device.name]);
+        let service = serviceFactory({homebridge, log: this.log, device, config});
+
+        if (!service) {
             this.log.debug(`Ignored device of type ${device.type}`);
             return;
         }
@@ -58,26 +61,10 @@ class ConnexoonPlatform {
             device,
         });
 
-        // retrieve accessory config
-        const config = get(this.config, ['devices', device.name]);
-        this._registerServices(accessory, device, config);
-
+        accessory.addService(service.getHomekitService());
         this.platformAccessories.push(accessory.homekitAccessory);
     }
 
-    _registerServices(accessory, device, config) {
-        const serviceClasses = ServicesMapping[device.type];
-        for (const serviceClass of serviceClasses) {
-            const service = new serviceClass({
-                homebridge,
-                log: this.log,
-                device,
-                config,
-            });
-
-            accessory.addService(service.getHomekitService());
-        }
-    }
 }
 
 module.exports = { PLUGIN_NAME, PLATFORM_NAME, ConnexoonPlatformFactory };
