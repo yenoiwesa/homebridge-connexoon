@@ -1,4 +1,4 @@
-const WindowCovering = require('./one-way-window-covering');
+const WindowCovering = require('./two-way-window-covering');
 
 describe('window-covering', () => {
     let mockDevice;
@@ -20,6 +20,8 @@ describe('window-covering', () => {
         mockHAPWindowCovering = jest.mock();
         mockHAPWindowCovering.getCharacteristic = jest.fn()
             .mockImplementation(() => { return { updateValue: jest.fn(), on: jest.fn().mockReturnThis() } });
+        mockHAPWindowCovering.addCharacteristic = jest.fn()
+            .mockImplementation(() => { return { updateValue: jest.fn(), on: jest.fn().mockReturnThis() } });
 
         WindowCovering.prototype._createHAPService = jest.fn().mockReturnValue(mockHAPWindowCovering);
         windowCovering = new WindowCovering(
@@ -27,7 +29,6 @@ describe('window-covering', () => {
         
         windowCovering.positionState.updateValue.mockClear();
     });
-
 
     test('initialization of the window covering service', () => {
         expect(windowCovering.device).toBe(mockDevice);
@@ -38,8 +39,17 @@ describe('window-covering', () => {
     });
 
 
-    test('getTargetPosition', (done) => {
-        windowCovering.getPositions = jest.fn().mockResolvedValue({ target: 57 });
+    test('getTargetPosition when not known next target', (done) => {
+        windowCovering.getPosition = jest.fn().mockResolvedValue(57);
+
+        windowCovering.getTargetPosition(function(error, target) {
+            expect(target).toBe(57);
+            done();
+        });
+    });
+
+    test('getTargetPosition when there is a known next target', (done) => {
+        windowCovering.nextTargetPosition = 57;
 
         windowCovering.getTargetPosition(function(error, target) {
             expect(target).toBe(57);
@@ -48,7 +58,7 @@ describe('window-covering', () => {
     });
 
     test('getTargetPosition exception', (done) => {
-        windowCovering.getPositions = jest.fn().mockRejectedValue(new Error('Async error'));
+        windowCovering.getPosition = jest.fn().mockRejectedValue(new Error('Async error'));
 
         windowCovering.getTargetPosition(function(error, target) {
             expect(error).toBeDefined();
@@ -57,78 +67,78 @@ describe('window-covering', () => {
         });
     });
 
-    test('getCurrentPosition', (done) => {
-        windowCovering.getPositions = jest.fn().mockResolvedValue({ current: 57 });
+    test('getPosition', async () => {
+        mockDevice.currentStates = jest.fn().mockResolvedValue({position: 57});
 
-        windowCovering.getCurrentPosition(function(error, current) {
-            expect(current).toBe(57);
-            done();
-        });
+        let current = await windowCovering.getPosition();
+        expect(current).toBe(57);
     });
 
-    test('getCurrentPosition exception', (done) => {
-        windowCovering.getPositions = jest.fn().mockRejectedValue(new Error('Async error'));
+    test('getPosition exception', async () => {
+        mockDevice.currentStates = async () => { throw new Error(); };
 
-        windowCovering.getCurrentPosition(function(error, target) {
-            expect(error).toBeDefined();
-            expect(error.message).toMatch('Async error');
-            done();
-        });
-    });
-
-    test('doGetPositions open', async () => {
-        mockDevice.getLastCommand = jest.fn().mockResolvedValue('open');
-
-        let position = await windowCovering.doGetPositions();
-        
-        expect(position).toHaveProperty('current');
-        expect(position).toHaveProperty('target');
-        expect(position.target).toBe(100);
-        expect(position.current).toBe(100);
-    });
-
-
-    test('doGetPositions close', async () => {
-        mockDevice.getLastCommand = jest.fn().mockResolvedValue('close');
-
-        let position = await windowCovering.doGetPositions();
-        
-        expect(position).toHaveProperty('current');
-        expect(position).toHaveProperty('target');
-        expect(position.target).toBe(0);
-        expect(position.current).toBe(0);
+        expect.assertions(1);
+        try {
+            await windowCovering.getPosition();
+        } catch(e) {
+            expect(e).toBeTruthy();
+        }
     });
 
     
-    test('setPosition callback is being called', (done) => {
+    test('setPosition callback is being called', async () => {
         jest.useFakeTimers();
 
         mockDevice.cancelCurrentExecution = jest.fn();
         mockDevice.executeCommand = jest.fn();
 
-        windowCovering.setPosition(100, function() {
-            expect(windowCovering.positionState.updateValue).toHaveBeenCalled();
-            done();
-        });
+        await windowCovering.setTargetPosition(100, jest.fn());
+
+        expect(mockDevice.cancelCurrentExecutionByCommand).toHaveBeenCalled();
+        expect(mockDevice.executeCommand).toHaveBeenCalled();
     });
 
     test('setPosition to close a window covering accessory.', async () => {
         jest.useFakeTimers();
 
         windowCovering.currentPosition.value = 100;
-        await windowCovering.setPosition(0, jest.fn());
+        windowCovering.getPosition = jest.fn().mockResolvedValue(57);
+        await windowCovering.setTargetPosition(0, jest.fn());
 
         expect(windowCovering.positionState.updateValue)
             .toHaveBeenNthCalledWith(1, PositionState.DECREASING);
-        expect(mockDevice.cancelCurrentExecution).toHaveBeenCalled();
+        expect(mockDevice.cancelCurrentExecutionByCommand).toHaveBeenCalled();
         expect(mockDevice.executeCommand).toHaveBeenCalled();
+    });
 
+    test('when polling stops, state is reset', async () => {
+        windowCovering.getPosition = jest.fn().mockResolvedValue(0);
         windowCovering.currentPosition.value = 0;
-        jest.runOnlyPendingTimers();
+        windowCovering.isPollingActive = true;
+        windowCovering.nextTargetPosition = 0;
 
-        expect(windowCovering.positionState.updateValue)
-            .toHaveBeenNthCalledWith(2, PositionState.STOPPED);
-        expect(windowCovering.positionState.updateValue).toHaveBeenCalledTimes(2);
+        windowCovering.isStopped = jest.fn().mockReturnValue(true);
+
+        await windowCovering.pollCurrentPosition(10);
+
+        expect(windowCovering.isPollingActive).toBeFalsy();
+        expect(jest.getTimerCount()).toBe(0);
+    });
+
+    test('when polling is active, the next poll is scheduled', async () => {
+        windowCovering.getPosition = jest.fn().mockResolvedValue(50);
+        windowCovering.currentPosition.value = 0;
+        windowCovering.isPollingActive = true;
+        windowCovering.nextTargetPosition = 0;
+
+        windowCovering.isStopped = jest.fn().mockReturnValue(false);
+
+        await windowCovering.pollCurrentPosition(10);
+
+        expect(windowCovering.isPollingActive).toBeTruthy();
+        expect(windowCovering.nextTargetPosition).toBe(0);
+        expect(windowCovering.pollingTimeout).toBeTruthy();
+        expect(jest.getTimerCount()).toBe(1);
     });
 
     test('updatePositionState increasing', () => {
@@ -152,38 +162,23 @@ describe('window-covering', () => {
             .toHaveBeenCalledWith(PositionState.STOPPED);
     });
 
-    test('targetToCommand open', () => {
-        expect(windowCovering.targetToCommand(100))
-            .toBe('open');
+    test('updatePositionState is considered as stopped when at 2% from target', () => {
+        windowCovering.currentPosition.value = 98;
+        windowCovering.updatePositionState(100);
+        expect(windowCovering.positionState.updateValue)
+            .toHaveBeenCalledWith(PositionState.STOPPED);
     });
 
-    test('targetToCommand close', () => {
-        expect(windowCovering.targetToCommand(0))
-            .toBe('close');
+    test('Convert from Somfy to Homekit', () => {
+        expect(windowCovering.fromSomfy(0)).toBe(-90);
+        expect(windowCovering.fromSomfy(100)).toBe(90);
+        expect(windowCovering.fromSomfy(50)).toBe(0);
     });
 
-    test('targetToCommand my', () => {
-        expect(windowCovering.targetToCommand(50))
-            .toBe('my');
-    });
-
-    test('targetToCommand unknown', () => {
-        expect(windowCovering.targetToCommand(75))
-            .toBeUndefined();
-    });
-
-    test('commandToPosition up/open', () => {
-        expect(windowCovering.commandToPosition('up')).toBe(100);
-        expect(windowCovering.commandToPosition('open')).toBe(100);
-    });
-
-    test('commandToPosition down/close', () => {
-        expect(windowCovering.commandToPosition('down')).toBe(0);
-        expect(windowCovering.commandToPosition('close')).toBe(0);
-    });
-
-    test('commandToPosition unknown', () => {
-        expect(windowCovering.commandToPosition('foo')).toBe(0);
+    test('Convert from Homekit to Somfy', () => {
+        expect(windowCovering.toSomfy(-90)).toBe(0);
+        expect(windowCovering.toSomfy(0)).toBe(50);
+        expect(windowCovering.toSomfy(90)).toBe(100);
     });
 
     afterEach(() => {
@@ -207,7 +202,9 @@ describe('window-covering', () => {
 
     function createMockDevice() {
         mockDevice = jest.mock();
-        mockDevice.cancelCurrentExecution = jest.fn().mockResolvedValue();
+        mockDevice.isTwoWay = true;
+        mockDevice.hasCommand = jest.fn().mockReturnValue(true);
+        mockDevice.cancelCurrentExecutionByCommand = jest.fn().mockResolvedValue();
         mockDevice.executeCommand = jest.fn().mockResolvedValue();
     }
 });

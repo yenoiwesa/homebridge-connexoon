@@ -1,32 +1,26 @@
-const { get } = require('lodash');
-const { cachePromise } = require('../utils');
 const AbstractService = require('./abstract-service');
 
 let Service;
 let Characteristic;
 
-const Position = {
-    CLOSED: 0,
-    OPEN: 100,
-};
-
 const Command = {
-    OPEN: 'open',
-    CLOSE: 'close',
-    UP: 'up',
-    DOWN: 'down',
-    MY: 'my',
+    CLOSURE_AND_ORIENTATION: 'setClosureAndOrientation',
+    CLOSURE: 'setClosure',
+    ORIENTATION: 'setOrientation'
 };
 
-const DEFAULT_COMMANDS = [
-    { command: Command.OPEN, position: Position.OPEN },
-    { command: Command.MY, position: 50 },
-    { command: Command.CLOSE, position: Position.CLOSED },
-];
+const POLL_TIMEOUT = 60 * 1000;
+const POLL_FREQUENCY = 5 * 1000;
 
-class OneWayWindowCovering extends AbstractService {
+class TwoWayWindowCovering extends AbstractService {
+
     constructor({ homebridge, log, device, config }) {
         super({ homebridge, log, device, config });
+
+        this.pollingTimeout = null;
+        this.pollingMaxTimeout = null;
+        this.isPollingActive = false;
+        this.nextTargetPosition = -1;
 
         if (!device.isTwoWay) {
             throw new Error('Wrong Service for a one way window covering device');
@@ -35,17 +29,6 @@ class OneWayWindowCovering extends AbstractService {
         // Service and Characteristic are from hap-nodejs
         Service = homebridge.hap.Service;
         Characteristic = homebridge.hap.Characteristic;
-
-        this.getPositions = cachePromise(
-            this.doGetPositions.bind(this),
-            1 * 1000
-        ).exec;
-
-        // appending the default commands to the overridden one so that
-        // the overridden command take precedence during evaluation
-        this.commands = get(this.config, 'commands', []).concat(
-            DEFAULT_COMMANDS
-        );
 
         this.hapService = this._createHAPService();
         this._mixinHAPServiceCharacteristics();
@@ -59,34 +42,40 @@ class OneWayWindowCovering extends AbstractService {
         this.targetPosition = this.hapService.getCharacteristic(Characteristic.TargetPosition);
         this.targetPosition
             .on('get', this.getTargetPosition.bind(this))
-            .on('set', this.setPosition.bind(this));
+            .on('set', this.setTargetPosition.bind(this));
 
         this.currentPosition = this.hapService.getCharacteristic(Characteristic.CurrentPosition);
-        this.currentPosition.on('get', this.getCurrentPosition.bind(this));
+        this.currentPosition.on('get', this.getPositionCallback.bind(this));
 
         // set default value
         this.positionState = this.hapService.getCharacteristic(Characteristic.PositionState);
         this.positionState.updateValue(Characteristic.PositionState.STOPPED);
+
+        if (this.device.hasCommand(Command.ORIENTATION)) {
+            this.currentAngle = this.hapService.addCharacteristic(Characteristic.CurrentHorizontalTiltAngle);
+            this.targetTiltAngle = this.hapService.addCharacteristic(Characteristic.TargetHorizontalTiltAngle);
+            this.targetTiltAngle.on('set', this.setTiltAngle.bind(this));
+            this.targetTiltAngle.on('get', this.getTiltAngle.bind(this));
+        }
     }
 
     getHomekitService() {
         return this.hapService;
     }
 
-    async getTargetPosition(callback) {
+    async getPosition() {
         try {
-            const { target } = await this.getPositions();
-
-            this.log.debug(`Target position for ${this.name} is ${target}`);
-            callback(null, target);
-        } catch (error) {
-            callback(error);
+            let state = await this.device.currentStates();
+            return state.position;
+        } catch (e) {
+            this.log.error(`Error for ${this.name}: ${e}`);
+            throw new Error(`Failed to retrieve position object for ${this.name}`);
         }
     }
 
-    async getCurrentPosition(callback) {
+    async getPositionCallback(callback) {
         try {
-            const { current } = await this.getPositions();
+            let current = await this.getPosition();
 
             this.log.debug(`Current position for ${this.name} is ${current}`);
             callback(null, current);
@@ -95,85 +84,157 @@ class OneWayWindowCovering extends AbstractService {
         }
     }
 
-    async doGetPositions() {
-        const lastCommand = await this.device.getLastCommand();
-        const position = this.commandToPosition(lastCommand);
+    async getTargetPosition(callback) {
+        try {
+            let target;
 
-        return { current: position, target: position };
+            if (this.nextTargetPosition != -1) {
+                target = this.nextTargetPosition;
+            } else {
+                // fallback if next target is unknown.
+                target = await this.getPosition();
+            }
+
+            this.log.debug(`Target position for ${this.name} is ${target}`);
+            callback(null, target);
+        } catch (error) {
+            callback(error);
+        }
     }
 
-    async setPosition(value, callback) {
-        const command = this.targetToCommand(value);
-
-        this.log(
-            `Set position to ${value} for ${this.name} with command ${command}`
-        );
-
-        if (command == null) {
-            this.currentPosition.updateValue(value);
-            callback();
-            return;
-        }
-
-        this.updatePositionState(value);
-
-        // return early for Siri to acknowledge asap
-        // even though the command might fail later
+    async setTargetPosition(value, callback) {
         callback();
 
+        this.log(`Set position to ${value} for ${this.name}`);
+        this.nextTargetPosition = value;
+
         try {
-            await this.device.cancelCurrentExecution();
-
-            await this.device.executeCommand(command);
-
-            // set the final requested position after 6s
-            setTimeout(() => {
-                this.currentPosition.updateValue(value);
-                this.updatePositionState(value);
-            }, 6 * 1000);
+            await this.device.cancelCurrentExecutionByCommand(Command.CLOSURE);
+            this.startPollingForCurrentPosition(POLL_FREQUENCY, POLL_TIMEOUT);
+            await this.device.executeCommand(Command.CLOSURE, [100 - value]);
         } catch (error) {
             this.log.error('Failed to execute command');
         }
     }
 
+    startPollingForCurrentPosition(frequency, maxPollingTimeout) {
+        if (this.isPollingActive) {
+            this.log.debug(`Polling already active for ${this.name}, skipping`);
+            return;
+        }
+
+        this.log.debug(`Start polling for ${this.name}`);
+        this.clearPollingTimeout();
+
+        this.isPollingActive = true;
+
+        this.pollCurrentPosition(frequency);
+        this.registerMaxPollingTimeout(maxPollingTimeout);
+    }
+
+
+    clearPollingTimeout() {
+        if (this.pollingTimeout) {
+            clearTimeout(this.pollingTimeout);
+            this.pollingTimeout = null;
+        }
+        if (this.pollingMaxTimeout) {
+            clearTimeout(this.pollingMaxTimeout);
+            this.pollingMaxTimeout = null;
+        }
+    }
+
+    async pollCurrentPosition(frequency) {
+        try {
+            let position = await this.getPosition();
+            this.currentPosition.updateValue(position);
+            this.updatePositionState(this.nextTargetPosition);
+            this.log.debug(`Updated position for ${this.name} is ${position}`);
+        } catch (e) {
+            // retry until the max polling timeout occurs
+            this.log.error(`Failed to retrieve position for ${this.name}.`);
+        }
+
+        if (this.isStopped()) {
+            this.log.debug(`Command for ${this.name} done`);
+            await this.resetExistingPoll();
+        } else if (this.isPollingActive) {
+            this.pollingTimeout = setTimeout(this.pollCurrentPosition.bind(this, frequency), frequency);
+        }
+    }
+
+    async resetExistingPoll() {
+        try {
+            let position = await this.getPosition();
+            this.currentPosition.updateValue(position);
+            this.targetPosition.updateValue(position);
+        } catch(e) {
+            this.log.error(`Failed to retrieve position for ${this.name}.`);
+        }
+
+        this.isPollingActive = false;
+
+        this.clearPollingTimeout();
+    }
+
+    registerMaxPollingTimeout(timeout) {
+        this.pollingMaxTimeout = setTimeout(this.resetExistingPoll.bind(this), timeout);
+    }
+
     updatePositionState(target) {
         const position = this.currentPosition.value;
 
-        let positionState;
-        if (position > target) {
-            positionState = Characteristic.PositionState.DECREASING;
+        let state;
+
+        // Motor are not precise enough to fully rely on the blind position vs the target postion.
+        // If position is within 2% of the target value, call it STOPPED.
+        let diff = target - position;
+        if (Math.abs(diff) <= 2) {
+            state = Characteristic.PositionState.STOPPED;
+        } else if (position > target) {
+            state = Characteristic.PositionState.DECREASING;
         } else if (position < target) {
-            positionState = Characteristic.PositionState.INCREASING;
-        } else {
-            positionState = Characteristic.PositionState.STOPPED;
+            state = Characteristic.PositionState.INCREASING;
         }
 
-        this.positionState.updateValue(positionState);
+        this.positionState.updateValue(state);
     }
 
-    commandToPosition(command) {
-        // map UP and DOWN commands to OPEN and CLOSE
-        switch (command) {
-            case Command.UP:
-                command = Command.OPEN;
-                break;
-            case Command.DOWN:
-                command = Command.CLOSE;
-                break;
+    isStopped() {
+        return this.positionState.value == Characteristic.PositionState.STOPPED;
+    }
+
+    async setTiltAngle(value, callback) {
+        callback();
+
+        try {
+            await this.device.cancelCurrentExecutionByCommand(Command.ORIENTATION);
+            await this.device.executeCommand(Command.ORIENTATION, [this.toSomfy(value)]);
+            this.currentAngle.updateValue(value);
+        } catch (error) {
+            this.log.error(`Failed to execute orientation for ${this.device.name}`);
         }
-
-        const configItem = this.commands.find(item => item.command === command);
-        return get(configItem, 'position', Position.CLOSED);
     }
 
-    targetToCommand(target) {
-        // there is no default command, simply ignore values
-        // that are not mapped (won't send anything)
-        return get(
-            this.commands.find(item => item.position === target),
-            'command'
-        );
+    async getTiltAngle(callback) {
+        try {
+            let state = await this.device.currentStates();
+            let tilt = this.fromSomfy(state.slateOrientation);
+            this.currentAngle.updateValue(tilt); 
+            callback(null, tilt);
+        } catch (e) {
+            this.log.error(`Error for ${this.name}: ${e}`);
+            throw new Error(`Failed to retrieve orientation object for ${this.name}`);
+        }
+    }
+
+    fromSomfy(value) {
+        return Math.round((value * 1.8) - 90);
+    }
+
+    toSomfy(value) {
+        return Math.round((value + 90) / 1.8);
     }
 }
 
-module.exports = OneWayWindowCovering;
+module.exports = TwoWayWindowCovering;

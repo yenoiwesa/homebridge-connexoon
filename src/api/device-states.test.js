@@ -22,6 +22,11 @@ describe('DeviceStates', () => {
         expect(state.position).toBe(100);
     });
 
+    test('device states can detect position based on DeploymentState', () => {
+        let state = new DeviceStates([{name: 'core:DeploymentState', value: 0}]);
+        expect(state.position).toBe(100);
+    });
+
     test('device states doesn\'t have position', () => {
         let state = new DeviceStates([]);
         expect(state.position).toBeUndefined();

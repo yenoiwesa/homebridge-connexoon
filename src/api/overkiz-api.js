@@ -1,5 +1,5 @@
 const { cachePromise } = require('../utils');
-const { Execution } = require('./execution');
+const Execution = require('./execution');
 const Device = require('./device');
 
 class OverkizAPI {
@@ -44,12 +44,12 @@ class OverkizAPI {
         try {
             return await this.requestHandler.sendRequestWithLogin(request =>
                 request.get({
-                    url: this.getUrlForQuery(`/setup/devices/${encodeURI(deviceURL)}/states`),
+                    url: this.getUrlForQuery(`/setup/devices/${encodeURIComponent(deviceURL)}/states`),
                     json: true
                 })
             );
         } catch (result) {
-            this.log.error(`Failed to get states for ${deciveURL} command`, result.error);
+            this.log.error(`Failed to get states for ${deviceURL} command`, result.error);
 
             throw result;
         }

@@ -1,6 +1,10 @@
 const { get, startCase } = require('lodash');
-const { Command } = require('./execution');
+const Command = require('./command');
 const DeviceStates = require('./device-states');
+
+const States = {
+    IN_PROGRESS: 'IN_PROGRESS'
+}
 
 class Device {
     constructor(json, overkiz) {
@@ -29,8 +33,9 @@ class Device {
     }
 
     get isTwoWay() {
-        return this.json.qualifiedName.startsWith('io:');
+        return !!(this.json.controllableName && this.json.controllableName.startsWith('io:'));
     }
+
 
     async getCurrentExecution() {
         const currentExecs = await this.overkiz.getCurrentExecutions();
@@ -47,6 +52,38 @@ class Device {
         }
 
         return null;
+    }
+
+    async getCurrentExecutionByCommand(command) {
+        const currentExecs = await this.overkiz.getCurrentExecutions();
+
+        for (const exec of currentExecs) {
+            if (exec.state != States.IN_PROGRESS) {
+                continue;
+            }
+            const { actionGroup: { actions } } = exec;
+            const action = actions.find(
+                action => {
+                    if (action.deviceURL !== this.id) {
+                        return false;
+                    }
+                  return !!(action.commands.find((item) => item.name == command));
+                });
+
+            if (action) {
+                return exec;
+            }
+        }
+
+        return null;
+    }
+
+    hasCommand(command) {
+        if (!this.json.definition || !this.json.definition.commands) {
+            return false;
+        }
+        const list = this.json.definition.commands;
+        return !!(list.find((item) => item.commandName == command));
     }
 
     async getCurrentCommand() {
@@ -88,11 +125,11 @@ class Device {
         return null;
     }
 
-    async executeCommand(command) {
+    async executeCommand(command, params = []) {
         return this.overkiz.executeCommands(
             `${this.name} - ${startCase(command)} - HomeKit`,
             this.id,
-            [new Command(command)]
+            [new Command(command, params)]
         );
     }
 
@@ -112,16 +149,22 @@ class Device {
         }
     }
 
-    async currentStates() {
+    async cancelCurrentExecutionByCommand(command) {
         try {
-            const states = await this.overkiz.getCurrentStates(this.id);
+            const currentExec = await this.getCurrentExecutionByCommand(command);
 
-            if (states) {
-                return new DeviceStates(states);
+            if (currentExec) {
+                return await this.cancelExecution(currentExec);
             }
         } catch (error) {
             // ignore
         }
+    }
+
+    async currentStates() {
+        const states = await this.overkiz.currentStates(this.id);
+
+        return new DeviceStates(states);
     }
 }
 
