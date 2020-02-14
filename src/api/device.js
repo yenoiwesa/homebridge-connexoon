@@ -35,7 +35,18 @@ class Device {
     get isTwoWay() {
         return !!(this.json.controllableName && this.json.controllableName.startsWith('io:'));
     }
+    
+    get states() {
+        return this.json.states ? new DeviceStates(this.json.states) : new DeviceStates([]);
+    }
 
+    hasCommand(command) {
+        if (!this.json.definition || !this.json.definition.commands) {
+            return false;
+        }
+        const list = this.json.definition.commands;
+        return !!(list.find((item) => item.commandName == command));
+    }
 
     async getCurrentExecution() {
         const currentExecs = await this.overkiz.getCurrentExecutions();
@@ -76,14 +87,6 @@ class Device {
         }
 
         return null;
-    }
-
-    hasCommand(command) {
-        if (!this.json.definition || !this.json.definition.commands) {
-            return false;
-        }
-        const list = this.json.definition.commands;
-        return !!(list.find((item) => item.commandName == command));
     }
 
     async getCurrentCommand() {

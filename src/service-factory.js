@@ -14,11 +14,11 @@ const TWO_WAY = {
     ExteriorVenetianBlind: TwoWayWindowCovering
 };
 
-function serviceFactory({homebridge, log, device, config}) {
+function serviceFactory({homebridge, log, eventsController, device, config}) {
     let serviceClass = (device.isTwoWay ? TWO_WAY[device.type] : ONE_WAY[device.type]);
 
     if (serviceClass) {
-        return new serviceClass({ homebridge, log, device, config });
+        return new serviceClass({ homebridge, eventsController, log, device, config });
     }
 }
 

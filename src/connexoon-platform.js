@@ -3,6 +3,8 @@ const serviceFactory = require('./service-factory');
 const overkizAPIFactory = require('./api/overkiz-api-factory');
 const Accessory = require('./accessory');
 
+const eventsControllerFactory = require('./api/events/events-controller-factory');
+
 let homebridge;
 
 const PLUGIN_NAME = 'homebridge-connexoon';
@@ -24,6 +26,8 @@ class ConnexoonPlatform {
         this.log(`${PLATFORM_NAME} Init`);
 
         this.overkiz = overkizAPIFactory(config, log);
+        this.eventsController = eventsControllerFactory(log, this.overkiz);
+        this.eventsController.start();
     }
 
     /**
@@ -48,7 +52,7 @@ class ConnexoonPlatform {
 
     _registerDevice(device) {
         const config = get(this.config, ['devices', device.name]);
-        let service = serviceFactory({homebridge, log: this.log, device, config});
+        let service = serviceFactory({homebridge, log: this.log, eventsController: this.eventsController, device, config});
 
         if (!service) {
             this.log.debug(`Ignored device of type ${device.type}`);
@@ -64,7 +68,6 @@ class ConnexoonPlatform {
         accessory.addService(service.getHomekitService());
         this.platformAccessories.push(accessory.homekitAccessory);
     }
-
 }
 
 module.exports = { PLUGIN_NAME, PLATFORM_NAME, ConnexoonPlatformFactory };

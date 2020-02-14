@@ -25,7 +25,7 @@ const DEFAULT_COMMANDS = [
 ];
 
 class WindowCovering extends AbstractService {
-    constructor({ homebridge, log, device, config }) {
+    constructor({ homebridge, log, eventsController, device, config }) {
         super({ homebridge, log, device, config });
 
         // Service and Characteristic are from hap-nodejs

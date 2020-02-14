@@ -56,20 +56,6 @@ describe('connexion-platform', () => {
         });
     });
    
-/*
-    test('ExteriorVenetianBlind are registered', done => {
-        let listDevices = [
-            new Device({ uiClass: "ExteriorVenetianBlind", label: "ExteriorVenetianBlind", deviceURL: "6" }, null),
-        ];
-
-        mockOverkizApi.listDevices = jest.fn().mockResolvedValue(listDevices);
-        connexoonPlatform.accessories(accessories => {
-            expect(accessories).toHaveLength(1);
-            done();
-        });
-    });
-    */
-
     test('Unknown devices are ignored', done => {
         let listDevices = [
             new Device({ uiClass: "Unknown", label: "Unknown", deviceURL: "6" }, null),

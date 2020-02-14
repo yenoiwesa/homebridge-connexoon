@@ -22,6 +22,38 @@ class OverkizAPI {
         return this.requestHandler.server.getUrlForQuery(query);
     }
 
+    async registerEvents() {
+        try {
+            let registration = await this.requestHandler.sendRequestWithLogin(request =>
+                request.post({
+                    url: this.getUrlForQuery('/events/register'),
+                    json: true
+                })
+            );
+            return registration.id;
+        } catch (result) {
+            this.log.error('Failed to register events', result.error.message);
+
+            throw result;
+        }
+    }
+
+    async fetchEvents(listnerId) {
+        try {
+            return await this.requestHandler.sendRequestWithLogin(request =>
+                request.post({
+                    url: this.getUrlForQuery(`/events/${listnerId}/fetch`),
+                    json: true
+                })
+            );
+        } catch (result) {
+            this.log.error('Failed to fetch events', result.error.message);
+
+            throw result;
+        }
+
+    }
+
     async listDevices() {
         try {
             const jsonDevices = await this.requestHandler.sendRequestWithLogin(
@@ -35,6 +67,26 @@ class OverkizAPI {
             return jsonDevices.map(json => new Device(json, this));
         } catch (result) {
             this.log.error('Failed to get device list', result.error);
+
+            throw result;
+        }
+    }
+
+    async listDeviceStates() {
+        try {
+            const jsonDevices = await this.requestHandler.sendRequestWithLogin(
+                request =>
+                    request.get({
+                        url: this.getUrlForQuery('/setup/devices'),
+                        json: true,
+                    })
+            );
+
+            return jsonDevices
+                .filter(json => !!json.states)
+                .map(json => new DeviceState(json.states, this));
+        } catch (result) {
+            this.log.error('Failed to get device states list', result.error);
 
             throw result;
         }

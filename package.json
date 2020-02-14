@@ -7,7 +7,7 @@
     "start": "homebridge -D -U ./homebridge-home -P .",
     "debug": "ndb npm start",
     "lint": "eslint .",
-    "test": "jest"
+    "test": "node ./node_modules/jest/bin/jest.js "
   },
   "keywords": [
     "homebridge-plugin",
@@ -16,7 +16,7 @@
     "connexoon",
     "tahoma"
   ],
-  "author": "Matthieu Di Berardino",
+  "authors": ["Matthieu Di Berardino", "Renault John Lecoultre"],
   "license": "Apache 2",
   "devDependencies": {
     "eslint": "^6.1.0",

@@ -23,7 +23,7 @@ describe('window-covering', () => {
 
         WindowCovering.prototype._createHAPService = jest.fn().mockReturnValue(mockHAPWindowCovering);
         windowCovering = new WindowCovering(
-            {log: mockConsole, homebridge: mockHomebridge, device: mockDevice, config: mockConfig});
+            {log: mockConsole, homebridge: mockHomebridge, eventsController: jest.mock(), device: mockDevice, config: mockConfig});
         
         windowCovering.positionState.updateValue.mockClear();
     });
