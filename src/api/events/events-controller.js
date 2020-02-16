@@ -4,13 +4,15 @@ const MAX_EXPONENT = 7;
 
 class EventsController {
 
-    constructor(log, eventFactory, overkiz, refreshFrequencyMs = 20 * 1000, executionGarbageCollectorCMs = 3 * 60 * 1000) {
+    constructor(log, eventFactory, overkiz, activeFrequencyMs = 5 * 1000, refreshFrequencyMs = 10 * 1000, executionGarbageCollectorCMs = 3 * 60 * 1000) {
         this.overkiz = overkiz;
         this.eventFactory = eventFactory;
         this.log = log;
         this.executionGarbageCollectorCMs = executionGarbageCollectorCMs;
+        this.activeFrequencyMs = activeFrequencyMs;
         this.refreshFrequencyMs = refreshFrequencyMs;
         this.backoffExponent = 0;
+        this.activeCount = 0;
 
         this.listenerId = null;
 
@@ -22,8 +24,9 @@ class EventsController {
     async start() {
         try {
             await this.registerEventController();
-            this.startFetch();
+            this.fetchEvents();
             this.startGarbageCollector();
+            this.log(`Event listener registered`)
         } catch (e) {
             this.log.error(`Failed to register event listener`);
         }
@@ -85,32 +88,40 @@ class EventsController {
         delete this.executionToDeviceUrl[execId];
     }
 
-    startFetch() {
-        this.timer = setInterval(this.fetchEvents.bind(this), this.refreshFrequencyMs);
-    }
-
     async fetchEvents() {
         try {
             let eventsJson = await this.overkiz.fetchEvents(this.listenerId);
 
-            if (!Array.isArray(eventsJson) || eventsJson.length == 0) {
-                return;
-            }
+            if (Array.isArray(eventsJson) && eventsJson.length > 0) {
+                let events = eventsJson
+                    .map(this.processJsonEvent.bind(this))
+                    .filter(event => event != null)
+                    .reduce((prev, curr) => prev.concat(curr));
 
-            eventsJson
-                .map(eventJson => this.eventFactory.createEvents(eventJson, this.getDeviceUrlsForExecId(eventJson.execId)))
-                .filter(event => event != null)
-                .reduce((prev, curr) => prev.concat(curr))
-                .forEach(this.processEvent.bind(this));
+                events.forEach(this.callSubscriber.bind(this));
+
+                if (events.length > 0) {
+                    this.resetActiveCount();
+                }
+            }
         } catch (e) {
             this.log.warn(`Failed to retrieve latest events, retry events registration.`);
             this.retryEventsRegistration();
         }
+
+        let timoutMs = this.activeCount ? this.activeFrequencyMs : this.refreshFrequencyMs;
+        this.log.debug(`Next fetch in ${timoutMs/1000}s.`);
+        this.timer = setTimeout(this.fetchEvents.bind(this), timoutMs);
+        this.decreaseActiveCount();
     }
 
-    processEvent(event) {
-        this.updateExecutionLifeCycle(event);
-        this.callSubscriber(event);
+    processJsonEvent(jsonEvent) {
+        let events = this.eventFactory.createEvents(jsonEvent, this.getDeviceUrlsForExecId(jsonEvent.execId));
+
+        if (events)
+            events.forEach(this.updateExecutionLifeCycle.bind(this));
+
+        return events;
     }
 
     updateExecutionLifeCycle(event) {
@@ -122,7 +133,7 @@ class EventsController {
                 this.assignDeviceUrlToExecId(event.execId, event.id);
                 break;
             case EventType.ExecutionStateChangedEventType:
-                if (event.hasStopped()) {
+                if (event.hasStopped) {
                     this.removeExecution(event.execId);
                 }
                 break;
@@ -148,12 +159,22 @@ class EventsController {
         this.executionToDeviceUrl[execId].deviceURLs.add(deviceURL);
     }
 
+    resetActiveCount() {
+        this.activeCount = 4;
+    }
+
+    decreaseActiveCount() {
+        --this.activeCount;
+        if (this.activeCount < 0)
+            this.activeCount = 0;
+    }
+
     getDeviceUrlsForExecId(execId) {
         if (!this.executionToDeviceUrl[execId]) {
-            return new Set();
+            return [];
         }
 
-        return this.executionToDeviceUrl[execId].deviceURLs;
+        return Array.from(this.executionToDeviceUrl[execId].deviceURLs);
     }
 
     subscribe(deviceURL, cb) {

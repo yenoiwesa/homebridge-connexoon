@@ -32,7 +32,7 @@ class OverkizAPI {
             );
             return registration.id;
         } catch (result) {
-            this.log.error('Failed to register events', result.error.message);
+            this.log.error('Failed to register events', result.message);
 
             throw result;
         }
@@ -47,7 +47,7 @@ class OverkizAPI {
                 })
             );
         } catch (result) {
-            this.log.error('Failed to fetch events', result.error.message);
+            this.log.error('Failed to fetch events', result.message);
 
             throw result;
         }

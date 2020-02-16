@@ -27,7 +27,6 @@ class ConnexoonPlatform {
 
         this.overkiz = overkizAPIFactory(config, log);
         this.eventsController = eventsControllerFactory(log, this.overkiz);
-        this.eventsController.start();
     }
 
     /**
@@ -48,6 +47,8 @@ class ConnexoonPlatform {
         } finally {
             callback(this.platformAccessories);
         }
+
+        await this.eventsController.start();
     }
 
     _registerDevice(device) {

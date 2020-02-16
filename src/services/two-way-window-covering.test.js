@@ -230,7 +230,7 @@ describe('window-covering', () => {
 
         target.nextTargetPosition = 0;
         const event = new ExecutionRegisteredEvent(mockConsole, 123, 'abc', 'deviceURL',
-            new Command('setPosition' , [{ value: 100, type: 1 }]));
+            new Command('setPosition' , [{ value: 0, type: 1 }]));
 
         target.onEvent(event);
 
@@ -249,6 +249,18 @@ describe('window-covering', () => {
 
         expect(target.isCommandRunning).toBe(false);
         expect(target.positionState.updateValue).toHaveBeenCalledWith(PositionState.STOPPED);
+    });
+
+    test('When a command for a different execID is received, it is ignored.', () => {
+        jest.useFakeTimers();
+
+        let event = new ExecutionStateChangedEvent(mockConsole, 123, '123', 'deviceURL', 'RUNNING', 'COMPLETED');
+        target.isCommandRunning = true;
+        target.execId = 'not the same';
+        target.onEvent(event);
+
+        expect(target.isCommandRunning).toBe(true);
+        expect(target.positionState.updateValue).not.toHaveBeenCalled();
     });
 
     test('updatePositionState increasing', () => {

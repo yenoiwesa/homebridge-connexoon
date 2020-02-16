@@ -14,7 +14,7 @@ describe('EventsController', () => {
         mockEventFactory = jest.mock();
         gcTimerMs = 3*60*1000;
 
-        target = new EventsController(mockConsole, mockEventFactory, mockOverkizApi, 10*1000, gcTimerMs);
+        target = new EventsController(mockConsole, mockEventFactory, mockOverkizApi, 5*1000, 10*1000, gcTimerMs);
     });
 
     test('Event controller can be created', () => {
@@ -66,8 +66,8 @@ describe('EventsController', () => {
         target.assignDeviceUrlToExecId('exec2', 'deviceurl2');
         target.assignDeviceUrlToExecId('exec2', 'deviceurl3');
 
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(1);
-        expect(target.getDeviceUrlsForExecId('exec2').size).toBe(2);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(1);
+        expect(target.getDeviceUrlsForExecId('exec2').length).toBe(2);
     });
 
     test('Events controller can remove entries in the execution cache', () => {
@@ -77,13 +77,13 @@ describe('EventsController', () => {
 
         target.removeExecution('exec1');
 
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(0);
-        expect(target.getDeviceUrlsForExecId('exec2').size).toBe(2);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(0);
+        expect(target.getDeviceUrlsForExecId('exec2').length).toBe(2);
         expect(target.executionToDeviceUrl.hasOwnProperty('exec1')).toBeFalsy();
     });
 
     test('Events controller returns an empty set when exec id is unknown', () => {
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(0);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(0);
     });
 
     test('Events controller GC should be called after expected time', () => {
@@ -109,8 +109,8 @@ describe('EventsController', () => {
 
         target.garbageCollectExecutions();
 
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(2);
-        expect(target.getDeviceUrlsForExecId('exec2').size).toBe(0);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(2);
+        expect(target.getDeviceUrlsForExecId('exec2').length).toBe(0);
     });
 
     test('Events controller GC should be a noop when nothing needs deletion', () => {
@@ -120,8 +120,8 @@ describe('EventsController', () => {
 
         target.garbageCollectExecutions();
 
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(2);
-        expect(target.getDeviceUrlsForExecId('exec2').size).toBe(1);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(2);
+        expect(target.getDeviceUrlsForExecId('exec2').length).toBe(1);
     });
 
     test('Events controller GC should behave correctly when nothing is in the cache.', () => {
@@ -143,10 +143,10 @@ describe('EventsController', () => {
         mockEventFactory.createEvents = jest.fn().mockReturnValue([
             jest.mock(), jest.mock()
         ]);
-        target.processEvent = jest.fn();
+        target.callSubscriber = jest.fn();
 
         await target.fetchEvents();
-        expect(target.processEvent).toHaveBeenCalledTimes(8);
+        expect(target.callSubscriber).toHaveBeenCalledTimes(8);
     });
     
     test('Events controller fetchEvents is resiliant to null', async () => {
@@ -156,10 +156,10 @@ describe('EventsController', () => {
         mockEventFactory.createEvents = jest.fn()
             .mockReturnValueOnce(null)
             .mockReturnValueOnce([jest.mock()]);
-        target.processEvent = jest.fn();
+        target.callSubscriber = jest.fn();
 
         await target.fetchEvents();
-        expect(target.processEvent).toHaveBeenCalledTimes(1);
+        expect(target.callSubscriber).toHaveBeenCalledTimes(1);
     });
 
     test('Events controller fetchEvents provide the right context to the event factory', async () => {
@@ -171,11 +171,11 @@ describe('EventsController', () => {
         mockEventFactory.createEvents = jest.fn()
             .mockReturnValueOnce([jest.mock()]);
 
-        target.processEvent = jest.fn();
+        target.callSubscriber = jest.fn();
         target.getDeviceUrlsForExecId = jest.fn();
 
         await target.fetchEvents();
-        expect(target.processEvent).toHaveBeenCalledTimes(1);
+        expect(target.callSubscriber).toHaveBeenCalledTimes(1);
         expect(target.getDeviceUrlsForExecId).toHaveBeenCalledWith('id');
     });
 
@@ -190,31 +190,31 @@ describe('EventsController', () => {
         let event = { type: EventType.ExecutionRegisteredEventType, execId: 'exec1' };
 
         target.updateExecutionLifeCycle(event);
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(1);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(1);
     });
 
     test('Execution lifecyle on state changed is a noop if command is still running', async () => {
         let event = {
             type: EventType.ExecutionStateChangedEventType,
             execId: 'exec1',
-            hasStopped: jest.fn().mockReturnValue(false)
+            hasStopped: false
         };
         target.assignDeviceUrlToExecId('exec1', 'deviceurl1');
 
         target.updateExecutionLifeCycle(event);
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(1);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(1);
     });
 
     test('Execution lifecyle on state changed removes execution that ended.', async () => {
         let event = {
             type: EventType.ExecutionStateChangedEventType,
             execId: 'exec1',
-            hasStopped: jest.fn().mockReturnValue(true)
+            hasStopped: true
         };
         target.assignDeviceUrlToExecId('exec1', 'deviceurl1');
 
         target.updateExecutionLifeCycle(event);
-        expect(target.getDeviceUrlsForExecId('exec1').size).toBe(0);
+        expect(target.getDeviceUrlsForExecId('exec1').length).toBe(0);
     });
 
     test('Events controller logs an error when trying to propagate an event with no id', async () => {

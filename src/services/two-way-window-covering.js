@@ -126,10 +126,11 @@ class TwoWayWindowCovering extends AbstractService {
             return;
         }
 
+        this.isCommandRunning = true;
+        this.execId = event.execId;
         this.nextTargetPosition = event.targetPosition;
         this.targetPosition.updateValue(this.nextTargetPosition);
         this.updatePositionState(this.nextTargetPosition);
-        this.isCommandRunning = true;
 
         this.resetHeartBeat();
         
@@ -137,7 +138,8 @@ class TwoWayWindowCovering extends AbstractService {
     }
 
     onExecutionStateChanged(event) {
-        if (event.hasStopped && !this.hasStopped()) {
+        let currentCommand = this.execId == null || this.execId == event.execId;
+        if (currentCommand && event.hasStopped && !this.hasStopped()) {
             this.log(`Stopping move command for ${this.name}`);
             this.markAsStopped();
         }
