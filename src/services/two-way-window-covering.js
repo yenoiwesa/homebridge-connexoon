@@ -193,7 +193,6 @@ class TwoWayWindowCovering extends AbstractService {
         this.updatePositionState(this.nextTargetPosition);
 
         try {
-            await this.device.cancelCurrentExecutionByCommand(Command.CLOSURE);
             await this.device.executeCommand(Command.CLOSURE, [100 - value]);
         } catch (error) {
             this.log.error('Failed to execute command');

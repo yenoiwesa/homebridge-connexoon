@@ -98,7 +98,6 @@ describe('window-covering', () => {
 
         await target.setTargetPosition(100, jest.fn());
 
-        expect(mockDevice.cancelCurrentExecutionByCommand).toHaveBeenCalled();
         expect(mockDevice.executeCommand).toHaveBeenCalled();
     });
 
@@ -111,7 +110,6 @@ describe('window-covering', () => {
 
         expect(target.positionState.updateValue)
             .toHaveBeenNthCalledWith(1, PositionState.DECREASING);
-        expect(mockDevice.cancelCurrentExecutionByCommand).toHaveBeenCalled();
         expect(mockDevice.executeCommand).toHaveBeenCalled();
     });
 
