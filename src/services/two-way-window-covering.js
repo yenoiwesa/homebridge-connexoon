@@ -115,7 +115,6 @@ class TwoWayWindowCovering extends AbstractService {
         let closing = prevPosition - position > 0;
 
         this.nextTargetPosition = closing ? 0 : 100;
-        this.isCommandRunning = true;
 
         this.targetPosition.updateValue(this.nextTargetPosition);
     }
