@@ -132,7 +132,8 @@ describe('EventsController', () => {
         jest.useFakeTimers();
         mockOverkizApi.fetchEvents = jest.fn().mockRejectedValue('No way');
         let registerSpy = jest.spyOn(target, 'retryEventsRegistration');
-        await target.fetchEvents();
+        target.isConnected = true;
+        await target.fetchEventsLoop();
         expect(registerSpy).toHaveBeenCalled();
     });
 
@@ -143,6 +144,7 @@ describe('EventsController', () => {
         mockEventFactory.createEvents = jest.fn().mockReturnValue([
             jest.mock(), jest.mock()
         ]);
+        target.isConnected = true;
         target.callSubscriber = jest.fn();
 
         await target.fetchEvents();
@@ -157,6 +159,7 @@ describe('EventsController', () => {
             .mockReturnValueOnce(null)
             .mockReturnValueOnce([jest.mock()]);
         target.callSubscriber = jest.fn();
+        target.isConnected = true;
 
         await target.fetchEvents();
         expect(target.callSubscriber).toHaveBeenCalledTimes(1);
@@ -173,6 +176,7 @@ describe('EventsController', () => {
 
         target.callSubscriber = jest.fn();
         target.getDeviceUrlsForExecId = jest.fn();
+        target.isConnected = true;
 
         await target.fetchEvents();
         expect(target.callSubscriber).toHaveBeenCalledTimes(1);

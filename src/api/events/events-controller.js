@@ -13,6 +13,7 @@ class EventsController {
         this.refreshFrequencyMs = refreshFrequencyMs;
         this.backoffExponent = 0;
         this.activeCount = 0;
+        this.isConnected = false;
 
         this.listenerId = null;
 
@@ -24,7 +25,7 @@ class EventsController {
     async start() {
         try {
             await this.registerEventController();
-            this.fetchEvents();
+            this.fetchEventsLoop();
             this.startGarbageCollector();
             this.log(`Event listener registered`)
         } catch (e) {
@@ -34,9 +35,8 @@ class EventsController {
 
     async registerEventController() {
         try {
-            this.backoffTimer = null;
             this.listenerId = await this.overkiz.registerEvents();
-            this.resetExponentialBackoff();
+            this.setAsConnected();
         } catch (e) {
             this.log.error(`Failed to register event listener`);
             this.retryEventsRegistration();
@@ -47,13 +47,16 @@ class EventsController {
         if (this.backoffTimer) {
             return;
         }
+        this.isConnected = false;
         let timeout = this.exponentialBackoffMs();
         this.log.warn(`Retry registration in ${timeout / 1000}s`);
         this.backoffTimer = setTimeout(this.resetEventControllerRegistration.bind(this), timeout);
     }
 
-    resetExponentialBackoff() {
+    setAsConnected() {
         this.backoffExponent = 0;
+        this.isConnected = true;
+        this.backoffTimer = null;
     }
 
     exponentialBackoffMs() {
@@ -88,22 +91,9 @@ class EventsController {
         delete this.executionToDeviceUrl[execId];
     }
 
-    async fetchEvents() {
+    async fetchEventsLoop() {
         try {
-            let eventsJson = await this.overkiz.fetchEvents(this.listenerId);
-
-            if (Array.isArray(eventsJson) && eventsJson.length > 0) {
-                let events = eventsJson
-                    .map(this.processJsonEvent.bind(this))
-                    .filter(event => event != null)
-                    .reduce((prev, curr) => prev.concat(curr));
-
-                events.forEach(this.callSubscriber.bind(this));
-
-                if (events.length > 0) {
-                    this.resetActiveCount();
-                }
-            }
+            await this.fetchEvents();
         } catch (e) {
             this.log.warn(`Failed to retrieve latest events, retry events registration.`);
             this.retryEventsRegistration();
@@ -111,8 +101,29 @@ class EventsController {
 
         let timoutMs = this.activeCount ? this.activeFrequencyMs : this.refreshFrequencyMs;
         this.log.debug(`Next fetch in ${timoutMs/1000}s.`);
-        this.timer = setTimeout(this.fetchEvents.bind(this), timoutMs);
+        this.timer = setTimeout(this.fetchEventsLoop.bind(this), timoutMs);
         this.decreaseActiveCount();
+    }
+
+    async fetchEvents() {
+        if (!this.isConnected) {
+            return;
+        }
+
+        let eventsJson = await this.overkiz.fetchEvents(this.listenerId);
+
+        if (Array.isArray(eventsJson) && eventsJson.length > 0) {
+            let events = eventsJson
+                .map(this.processJsonEvent.bind(this))
+                .filter(event => event != null)
+                .reduce((prev, curr) => prev.concat(curr));
+
+            events.forEach(this.callSubscriber.bind(this));
+
+            if (events.length > 0) {
+                this.resetActiveCount();
+            }
+        }
     }
 
     processJsonEvent(jsonEvent) {

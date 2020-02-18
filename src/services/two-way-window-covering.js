@@ -266,8 +266,8 @@ class TwoWayWindowCovering extends AbstractService {
             this.currentAngle.updateValue(tilt); 
             callback(null, tilt);
         } catch (e) {
-            this.log.error(`Error for ${this.name}: ${e}`);
-            throw new Error(`Failed to retrieve orientation object for ${this.name}`);
+            this.log.error(`Failed to retrieve orientation object for ${this.name}. ${e.message}`);
+            callback(e);
         }
     }
 
