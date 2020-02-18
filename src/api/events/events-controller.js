@@ -44,10 +44,11 @@ class EventsController {
     }
 
     retryEventsRegistration() {
+        this.isConnected = false;
+
         if (this.backoffTimer) {
             return;
         }
-        this.isConnected = false;
         let timeout = this.exponentialBackoffMs();
         this.log.warn(`Retry registration in ${timeout / 1000}s`);
         this.backoffTimer = setTimeout(this.resetEventControllerRegistration.bind(this), timeout);
