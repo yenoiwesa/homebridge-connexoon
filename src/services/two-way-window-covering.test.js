@@ -44,7 +44,7 @@ describe('window-covering', () => {
 
 
     test('getTargetPosition when not known next target', (done) => {
-        target.getPosition = jest.fn().mockResolvedValue(57);
+        target.getPosition = jest.fn().mockReturnValue(57);
 
         target.getTargetPosition(function(error, target) {
             expect(target).toBe(57);
@@ -61,35 +61,13 @@ describe('window-covering', () => {
         });
     });
 
-    test('getTargetPosition exception', (done) => {
-        target.getPosition = jest.fn().mockRejectedValue(new Error('Async error'));
-
-        target.getTargetPosition(function(error, target) {
-            expect(error).toBeDefined();
-            expect(error.message).toMatch('Async error');
-            done();
-        });
-    });
-
     test('getPosition', async () => {
-        mockDevice.currentStates = jest.fn().mockResolvedValue({position: 57});
+        mockDevice.currentStates = {position: 57};
 
         let current = await target.getPosition();
         expect(current).toBe(57);
     });
 
-    test('getPosition exception', async () => {
-        mockDevice.currentStates = async () => { throw new Error(); };
-
-        expect.assertions(1);
-        try {
-            await target.getPosition();
-        } catch(e) {
-            expect(e).toBeTruthy();
-        }
-    });
-
-    
     test('setPosition callback is being called', async () => {
         jest.useFakeTimers();
 
@@ -104,8 +82,8 @@ describe('window-covering', () => {
     test('setPosition to close a window covering accessory.', async () => {
         jest.useFakeTimers();
 
-        target.currentPosition.value = 100;
-        target.getPosition = jest.fn().mockResolvedValue(57);
+        target.cachedPosition = 100;
+        target.getPosition = jest.fn().mockReturnValue(57);
         await target.setTargetPosition(0, jest.fn());
 
         expect(target.positionState.updateValue)
@@ -269,21 +247,21 @@ describe('window-covering', () => {
     });
 
     test('updatePositionState decreasing', () => {
-        target.currentPosition.value = 100;
+        target.cachedPosition = 100;
         target.updatePositionState(0);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.DECREASING);
     });
 
     test('updatePositionState stopped', () => {
-        target.currentPosition.value = 100;
+        target.cachedPosition = 100;
         target.updatePositionState(100);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.STOPPED);
     });
 
     test('updatePositionState is considered as stopped when at 2% from target', () => {
-        target.currentPosition.value = 98;
+        target.cachedPosition = 98;
         target.updatePositionState(100);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.STOPPED);

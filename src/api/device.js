@@ -10,6 +10,10 @@ class Device {
     constructor(json, overkiz) {
         this.json = json;
         this.overkiz = overkiz;
+
+        if (json.definition && json.definition.states) {
+            this.currentStates = new DeviceStates(json.definition.states);
+        }
     }
 
     get id() {
@@ -164,10 +168,11 @@ class Device {
         }
     }
 
-    async currentStates() {
+    async refreshCurrentStates() {
         const states = await this.overkiz.currentStates(this.id);
 
-        return new DeviceStates(states);
+        this.currentStates = new DeviceStates(states);
+        return this.currentStates;
     }
 }
 

@@ -22,7 +22,7 @@ describe('Device', () => {
         let mockAPI = jest.mock();
         mockAPI.currentStates = jest.fn().mockResolvedValue([]);
         let device = new Device({deviceURL: 'URL'}, mockAPI);
-        let states = await device.currentStates();
+        let states = await device.refreshCurrentStates();
 
         expect(mockAPI.currentStates).toHaveBeenCalledWith("URL");
         expect(states).toMatchObject(new DeviceStates());

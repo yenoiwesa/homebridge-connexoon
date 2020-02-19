@@ -17,10 +17,11 @@ class TwoWayWindowCovering extends AbstractService {
     constructor({ homebridge, log, eventsController, device, config }) {
         super({ homebridge, log, device, config });
 
+        this.isCommandRunning = false;
         this.pollingTimeout = null;
         this.heartBeatTimeout = null;
         this.nextTargetPosition = -1;
-        this.isCommandRunning = false;
+        this.cachedPosition = -1;
 
         if (!device.isTwoWay) {
             throw new Error('Wrong Service for a one way window covering device');
@@ -88,14 +89,14 @@ class TwoWayWindowCovering extends AbstractService {
             return;
         }
 
-        let prevPosition = this.currentPosition.value;
-        let position = event.deviceStates.position;
-        this.currentPosition.updateValue(position);
-        this.inferTargetPositionOnSilenceExecution(position, prevPosition);
+        let prevPosition = this.cachedPosition;
+        this.cachedPosition = event.deviceStates.position;
+        this.currentPosition.updateValue(this.cachedPosition);
+        this.inferTargetPositionOnSilenceExecution(this.cachedPosition, prevPosition);
         this.updatePositionState(this.nextTargetPosition);
 
         this.resetHeartBeat();
-        this.log.debug(`Updated position for ${this.name} is ${position}`);
+        this.log.debug(`Updated position for ${this.name} is ${this.cachedPosition}`);
 
         if (this.hasStopped()) {
             this.markAsStopped();
@@ -144,44 +145,30 @@ class TwoWayWindowCovering extends AbstractService {
         }
     }
 
-    async getPosition() {
-        try {
-            let state = await this.device.currentStates();
-            return state.position;
-        } catch (e) {
-            this.log.error(`Error for ${this.name}: ${e}`);
-            throw new Error(`Failed to retrieve position object for ${this.name}`);
+    getPosition() {
+        if (this.cachedPosition == -1) {
+            let states = this.device.currentStates;
+            this.cachedPosition = states.position;
         }
+        return this.cachedPosition;
     }
 
-    async getPositionCallback(callback) {
-        try {
-            let current = await this.getPosition();
+    getPositionCallback(callback) {
+        let current = this.getPosition();
 
-            this.log.debug(`Current position for ${this.name} is ${current}`);
-            callback(null, current);
-        } catch (error) {
-            callback(error);
-        }
+        this.log.debug(`Current position for ${this.name} is ${current}`);
+        callback(null, current);
     }
 
     async getTargetPosition(callback) {
-        try {
-            let target;
-
-            if (this.nextTargetPosition != -1) {
-                target = this.nextTargetPosition;
-            } else {
-                // fallback if next target is unknown.
-                target = await this.getPosition();
-                this.nextTargetPosition = target;
-            }
-
-            this.log.debug(`Target position for ${this.name} is ${target}`);
-            callback(null, target);
-        } catch (error) {
-            callback(error);
+        if (this.nextTargetPosition == -1) {
+            this.nextTargetPosition = this.getPosition();
         }
+        
+        let target = this.nextTargetPosition;
+
+        this.log.debug(`Target position for ${this.name} is ${target}`);
+        callback(null, target);
     }
 
     async setTargetPosition(value, callback) {
@@ -201,11 +188,13 @@ class TwoWayWindowCovering extends AbstractService {
     async markAsStopped() {
         this.isCommandRunning = false;
         this.positionState.updateValue(this.PositionState.STOPPED);
-        this.resetCurrentAndTargetPosition(this.currentPosition.value);
+        this.resetCurrentAndTargetPosition(this.getTargetPosition());
         this.clearHeartBeatTimeout();
     }
 
     resetCurrentAndTargetPosition(position) {
+        this.cachedPosition = position;
+        this.targetPosition = position;
         this.currentPosition.updateValue(position);
         this.targetPosition.updateValue(position);
     }
@@ -225,7 +214,7 @@ class TwoWayWindowCovering extends AbstractService {
     }
 
     updatePositionState(target) {
-        const position = this.currentPosition.value;
+        const position = this.cachedPosition;
 
         let state;
 
@@ -261,7 +250,7 @@ class TwoWayWindowCovering extends AbstractService {
 
     async getTiltAngle(callback) {
         try {
-            let state = await this.device.currentStates();
+            let state = await this.device.fetchCurrentStates();
             let tilt = this.fromSomfy(state.slateOrientation);
             this.currentAngle.updateValue(tilt); 
             callback(null, tilt);
