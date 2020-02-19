@@ -139,7 +139,7 @@ class TwoWayWindowCovering extends AbstractService {
 
     onExecutionStateChanged(event) {
         let currentCommand = this.execId == null || this.execId == event.execId;
-        if (currentCommand && event.hasStopped && !this.hasStopped()) {
+        if (currentCommand && event.hasStopped) {
             this.log(`Stopping move command for ${this.name}`);
             this.markAsStopped();
         }
