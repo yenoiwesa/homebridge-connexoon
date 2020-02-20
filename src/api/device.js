@@ -12,7 +12,7 @@ class Device {
         this.overkiz = overkiz;
 
         if (json.definition && json.definition.states) {
-            this.currentStates = new DeviceStates(json.definition.states);
+            this.currentStates = new DeviceStates(json.states);
         }
     }
 
@@ -40,10 +40,6 @@ class Device {
         return !!(this.json.controllableName && this.json.controllableName.startsWith('io:'));
     }
     
-    get states() {
-        return this.json.states ? new DeviceStates(this.json.states) : new DeviceStates([]);
-    }
-
     hasCommand(command) {
         if (!this.json.definition || !this.json.definition.commands) {
             return false;

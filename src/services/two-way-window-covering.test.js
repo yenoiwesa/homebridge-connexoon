@@ -53,10 +53,10 @@ describe('window-covering', () => {
     });
 
     test('getTargetPosition when there is a known next target', (done) => {
-        target.nextTargetPosition = 57;
+        target.cachedTargetPosition = 57;
 
-        target.getTargetPosition(function(error, target) {
-            expect(target).toBe(57);
+        target.getTargetPosition(function(error, value) {
+            expect(value).toBe(57);
             done();
         });
     });
@@ -96,14 +96,14 @@ describe('window-covering', () => {
 
         target.isCommandRunning = true;
         target.currentPosition.value = 0;
-        target.nextTargetPosition = 50;
+        target.cachedTargetPosition = 50;
         const event = new DeviceStateChangedEvent(mockConsole, 123, 'abc', 
             new DeviceState([ { "name": "core:ClosureState", "type": 1, "value": "93" } ]));
 
         target.onEvent(event);
 
         expect(target.currentPosition.updateValue).toHaveBeenCalledWith(100 - 93); 
-        expect(target.nextTargetPosition).toBe(50);
+        expect(target.cachedTargetPosition).toBe(50);
         expect(target.positionState.updateValue).toHaveBeenCalledWith(target.PositionState.INCREASING);
         expect(target.positionState.updateValue).not.toHaveBeenCalledWith(target.PositionState.STOPPED);
         expect(setTimeout).toHaveBeenCalledTimes(1);
@@ -120,7 +120,7 @@ describe('window-covering', () => {
             get: mockvalue
         });
 
-        target.nextTargetPosition = 100;
+        target.cachedTargetPosition = 100;
         target.isCommandRunning = true;
         const event = new DeviceStateChangedEvent(mockConsole, 123, 'abc', 
             new DeviceState([ { "name": "core:ClosureState", "type": 1, "value": "1" } ]));
@@ -128,7 +128,7 @@ describe('window-covering', () => {
         target.onEvent(event);
 
         expect(target.currentPosition.updateValue).toHaveBeenCalledWith(99); 
-        expect(target.nextTargetPosition).toBe(100);
+        expect(target.cachedTargetPosition).toBe(100);
         expect(target.positionState.updateValue).toHaveBeenLastCalledWith(target.PositionState.STOPPED);
     });
 
@@ -143,7 +143,7 @@ describe('window-covering', () => {
             get: mockvalue
         });
 
-        target.nextTargetPosition = 50;
+        target.cachedTargetPosition = 50;
         target.isCommandRunning = true;
         const event = new DeviceStateChangedEvent(mockConsole, 123, 'abc', 
             new DeviceState([ { "name": "core:ClosureState", "type": 1, "value": "49" } ]));
@@ -151,7 +151,7 @@ describe('window-covering', () => {
         target.onEvent(event);
 
         expect(target.currentPosition.updateValue).toHaveBeenCalledWith(51); 
-        expect(target.nextTargetPosition).toBe(50);
+        expect(target.cachedTargetPosition).toBe(50);
         expect(target.positionState.updateValue).toHaveBeenLastCalledWith(target.PositionState.STOPPED);
     });
 
@@ -166,13 +166,13 @@ describe('window-covering', () => {
             get: mockvalue
         });
 
-        target.nextTargetPosition = -1;
+        target.cachedTargetPosition = -1;
         const event = new DeviceStateChangedEvent(mockConsole, 123, 'abc', 
             new DeviceState([ { "name": "core:ClosureState", "type": 1, "value": "20" } ]));
 
         target.onEvent(event);
 
-        expect(target.nextTargetPosition).toBe(100);
+        expect(target.cachedTargetPosition).toBe(100);
         expect(target.positionState.updateValue).toHaveBeenLastCalledWith(target.PositionState.INCREASING);
     });
 
@@ -204,13 +204,13 @@ describe('window-covering', () => {
             get: mockvalue
         });
 
-        target.nextTargetPosition = 0;
+        target.cachedTargetPosition = 0;
         const event = new ExecutionRegisteredEvent(mockConsole, 123, 'abc', 'deviceURL',
             new Command('setPosition' , [{ value: 0, type: 1 }]));
 
         target.onEvent(event);
 
-        expect(target.nextTargetPosition).toBe(100);
+        expect(target.cachedTargetPosition).toBe(100);
         expect(target.isCommandRunning).toBe(true);
         expect(target.positionState.updateValue).toHaveBeenCalledWith(PositionState.INCREASING);
     });
@@ -260,8 +260,8 @@ describe('window-covering', () => {
             .toHaveBeenCalledWith(PositionState.STOPPED);
     });
 
-    test('updatePositionState is considered as stopped when at 2% from target', () => {
-        target.cachedPosition = 98;
+    test('updatePositionState is considered as stopped when at 1% from target', () => {
+        target.cachedPosition = 99;
         target.updatePositionState(100);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.STOPPED);
