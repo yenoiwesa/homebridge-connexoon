@@ -1,4 +1,4 @@
-const Device = require('./api/device');
+const Device = require('./api/device/device');
 
 describe('connexion-platform', () => {
     let connexoonPlatform;

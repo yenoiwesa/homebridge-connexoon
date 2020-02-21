@@ -21,7 +21,7 @@ class ExecutionRegisteredEvent extends Event {
     get isAffectingPosition() {
         let cmd = this.command.name;
 
-        return ['setClosureAndOrientation', 'setPosition', 'setClosure'].includes(cmd);
+        return ['setClosureAndOrientation', 'setPosition', 'setClosure', 'setDeployment'].includes(cmd);
     }
 }
 

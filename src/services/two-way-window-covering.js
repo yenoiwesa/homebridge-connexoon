@@ -4,12 +4,6 @@ const EventType = require('./../api/events/event-type');
 let Service;
 let Characteristic;
 
-const Command = {
-    CLOSURE_AND_ORIENTATION: 'setClosureAndOrientation',
-    CLOSURE: 'setClosure',
-    ORIENTATION: 'setOrientation'
-};
-
 const MAX_TIMEOUT = 60 * 1000;
 
 class TwoWayWindowCovering extends AbstractService {
@@ -18,11 +12,8 @@ class TwoWayWindowCovering extends AbstractService {
         super({ homebridge, log, device, config });
 
         this.isCommandRunning = false;
-        this.pollingTimeout = null;
         this.heartBeatTimeout = null;
         this.cachedTargetPosition = -1;
-        this.cachedPosition = -1;
-        this.cachedTiltAngle = -1;
 
         if (!device.isTwoWay) {
             throw new Error('Wrong Service for a one way window covering device');
@@ -56,7 +47,7 @@ class TwoWayWindowCovering extends AbstractService {
         this.positionState = this.hapService.getCharacteristic(this.PositionState);
         this.positionState.updateValue(this.PositionState.STOPPED);
 
-        if (this.device.hasCommand(Command.ORIENTATION)) {
+        if (this.device.setSlateOrientation) {
             this.currentAngle = this.hapService.addCharacteristic(Characteristic.CurrentHorizontalTiltAngle);
             this.targetTiltAngle = this.hapService.addCharacteristic(Characteristic.TargetHorizontalTiltAngle);
             this.targetTiltAngle.on('set', this.setTiltAngle.bind(this));
@@ -90,14 +81,15 @@ class TwoWayWindowCovering extends AbstractService {
             return;
         }
 
-        let prevPosition = this.cachedPosition;
-        this.cachedPosition = event.deviceStates.position;
-        this.currentPosition.updateValue(this.cachedPosition);
-        this.inferTargetPositionOnSilenceExecution(this.cachedPosition, prevPosition);
+        let prevPosition = this.device.getPosition();
+        this.device.mergeStates(event.deviceStates);
+        let position = this.device.getPosition();
+        this.currentPosition.updateValue(position);
+        this.inferTargetPositionOnSilenceExecution(position, prevPosition);
         this.updatePositionState(this.cachedTargetPosition);
 
         this.resetHeartBeat();
-        this.log.debug(`Updated position for ${this.name} is ${this.cachedPosition}`);
+        this.log.debug(`Updated position for ${this.name} is ${position}`);
 
         if (!this.isCommandRunning && this.hasStopped()) {
             this.markAsStopped();
@@ -146,10 +138,7 @@ class TwoWayWindowCovering extends AbstractService {
     }
 
     getPosition() {
-        if (this.cachedPosition == -1) {
-            this.cachedPosition = this.device.currentStates.position;
-        }
-        return this.cachedPosition;
+        return this.device.getPosition();
     }
 
     getPositionCallback(callback) {
@@ -178,7 +167,7 @@ class TwoWayWindowCovering extends AbstractService {
         this.updatePositionState(this.cachedTargetPosition);
 
         try {
-            await this.device.executeCommand(Command.CLOSURE, [100 - value]);
+            await this.device.setPosition(value);
         } catch (error) {
             this.log.error('Failed to execute command');
         }
@@ -192,7 +181,7 @@ class TwoWayWindowCovering extends AbstractService {
     }
 
     resetCurrentAndTargetPosition(position) {
-        this.cachedPosition = position;
+        this.device.resetPosition(position);
         this.cachedTargetPosition = position;
         this.currentPosition.updateValue(position);
         this.targetPosition.updateValue(position);
@@ -213,9 +202,14 @@ class TwoWayWindowCovering extends AbstractService {
     }
 
     updatePositionState(target) {
-        const position = this.cachedPosition;
-
+        let position = this.device.getPosition();
         let state;
+
+        if (this.device.isRevert) {
+            let tmp = position;
+            position = target;
+            target = tmp;
+        }
 
         // Motor are not precise enough to fully rely on the blind position vs the target postion.
         // If position is within 1% of the target value, call it STOPPED.
@@ -239,32 +233,17 @@ class TwoWayWindowCovering extends AbstractService {
         callback();
 
         try {
-            await this.device.executeCommand(Command.ORIENTATION, [this.toSomfy(value)]);
+            await this.device.setPositionAndSlateOrientation(this.cachedTargetPosition, value);
             this.currentAngle.updateValue(value);
+            this.device.resetSlateOrientation(value);
         } catch (error) {
             this.log.error(`Failed to execute orientation for ${this.device.name}`);
         }
     }
 
-    async getTiltAngle(callback) {
-        try {
-            //let state = await this.device.refreshCurrentStates();
-            let state = this.device.currentStates;
-            let tilt = this.fromSomfy(state.slateOrientation);
-            this.currentAngle.updateValue(tilt); 
-            callback(null, tilt);
-        } catch (e) {
-            this.log.error(`Failed to retrieve orientation object for ${this.name}. ${e.message}`);
-            callback(e);
-        }
-    }
-
-    fromSomfy(value) {
-        return Math.round((value * 1.8) - 90);
-    }
-
-    toSomfy(value) {
-        return Math.round((value + 90) / 1.8);
+    getTiltAngle(callback) {
+        let tilt = this.device.getSlateOrientation();
+        callback(null, tilt);
     }
 }
 

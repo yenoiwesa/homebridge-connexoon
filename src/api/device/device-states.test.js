@@ -61,4 +61,33 @@ describe('DeviceStates', () => {
         let state = new DeviceStates([{name: 'core:Stuff', value: 0}]);
         expect(state.hasPositionState).toBeFalsy();
     });
+
+    test('device states can change state value', () => {
+        let state = new DeviceStates([{name: 'core:Stuff', value: 0}]);
+        state.setStateValue('core:Stuff', 42);
+        expect(state.getStateValue('core:Stuff')).toBe(42);
+    });
+
+    test('change state value is a noop when state doesn\'t exist', () => {
+        let state = new DeviceStates([{name: 'core:Stuff', value: 0}]);
+        state.setStateValue('Not there', 42);
+        expect(state.getStateValue('Not there')).toBeUndefined();
+    });
+
+    test('device states can be merged with new states', () => {
+        let state = new DeviceStates([{name: 'oldStuff', value: 0}]);
+        let newState = new DeviceStates([{name: 'newStuff', value: 42}]);
+        state.mergeStates(newState);
+        expect(state.length).toBe(2);
+        expect(state.getStateValue('oldStuff')).toBe(0);
+        expect(state.getStateValue('newStuff')).toBe(42);
+    });
+
+    test('device states can be merged with existing states', () => {
+        let state = new DeviceStates([{name: 'oldStuff', value: 0}]);
+        let newState = new DeviceStates([{name: 'oldStuff', value: 42}]);
+        state.mergeStates(newState);
+        expect(state.length).toBe(1);
+        expect(state.getStateValue('oldStuff')).toBe(42);
+    });
 });

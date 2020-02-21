@@ -1,17 +1,14 @@
 const { get, startCase } = require('lodash');
-const Command = require('./command');
+const Command = require('../command');
 const DeviceStates = require('./device-states');
-
-const States = {
-    IN_PROGRESS: 'IN_PROGRESS'
-}
 
 class Device {
     constructor(json, overkiz) {
         this.json = json;
         this.overkiz = overkiz;
+        this.isRevert = false;
 
-        if (json.definition && json.definition.states) {
+        if (json.states) {
             this.currentStates = new DeviceStates(json.states);
         }
     }
@@ -48,6 +45,7 @@ class Device {
         return !!(list.find((item) => item.commandName == command));
     }
 
+
     async getCurrentExecution() {
         const currentExecs = await this.overkiz.getCurrentExecutions();
 
@@ -56,30 +54,6 @@ class Device {
                 actionGroup: { actions },
             } = exec;
             const action = actions.find(action => action.deviceURL === this.id);
-
-            if (action) {
-                return exec;
-            }
-        }
-
-        return null;
-    }
-
-    async getCurrentExecutionByCommand(command) {
-        const currentExecs = await this.overkiz.getCurrentExecutions();
-
-        for (const exec of currentExecs) {
-            if (exec.state != States.IN_PROGRESS) {
-                continue;
-            }
-            const { actionGroup: { actions } } = exec;
-            const action = actions.find(
-                action => {
-                    if (action.deviceURL !== this.id) {
-                        return false;
-                    }
-                  return !!(action.commands.find((item) => item.name == command));
-                });
 
             if (action) {
                 return exec;
@@ -152,16 +126,8 @@ class Device {
         }
     }
 
-    async cancelCurrentExecutionByCommand(command) {
-        try {
-            const currentExec = await this.getCurrentExecutionByCommand(command);
-
-            if (currentExec) {
-                return await this.cancelExecution(currentExec);
-            }
-        } catch (error) {
-            // ignore
-        }
+    mergeStates(states) {
+        return this.currentStates.mergeStates(states);
     }
 
     async refreshCurrentStates() {

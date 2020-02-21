@@ -27,17 +27,49 @@ class DeviceStates {
     }
 
     getStateValue(name) {
-        let state = this.states.find(obj => obj.name == name);
+        let state = this.getState(name);
         return state ? state.value : undefined;
     }
 
+    setStateValue(name, value) {
+        let state = this.getState(name);
+
+        if (state) {
+            state.value = value;
+        }
+    }
+
     hasState(name) {
-        let state = this.states.find(obj => obj.name == name);
+        let state = this.getState(name);
         return !!state;
+    }
+
+    getState(name) {
+        return this.states.find(obj => obj.name == name);
     }
 
     get length() {
         return this.states.length;
+    }
+
+    mergeStates(newStates) {
+        if (!(newStates instanceof DeviceStates)) {
+            throw new TypeError(`Parameter must be of type Array when it is ${typeof newStates}`);
+        }
+
+        newStates.states.forEach(state => {
+            this.replaceOrAddState(state);
+        });
+        return this;
+    }
+
+    replaceOrAddState(newState) {
+        let currentState = this.getState(newState.name);
+        if (!currentState) {
+            this.states.push(newState);
+        } else {
+            currentState.value = newState.value;
+        }
     }
 }
 

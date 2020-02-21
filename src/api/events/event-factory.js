@@ -2,7 +2,7 @@
 const DeviceStateChangedEvent = require('./device-state-changed-event');
 const ExecutionRegisteredEvent = require('./execution-registered-event');
 const ExecutionStateChangedEvent = require('./execution-state-changed-event');
-const DeviceStates = require('../device-states');
+const DeviceStates = require('../device/device-states');
 const Command = require('../command');
 
 class EventFactory {

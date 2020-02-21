@@ -1,5 +1,5 @@
 const WindowCovering = require('./two-way-window-covering');
-const DeviceState = require('../api/device-states');
+const DeviceState = require('../api/device/device-states');
 const Command = require('../api/command');
 const DeviceStateChangedEvent = require('../api/events/device-state-changed-event');
 const ExecutionRegisteredEvent = require('../api/events/execution-registered-event');
@@ -62,47 +62,45 @@ describe('window-covering', () => {
     });
 
     test('getPosition', async () => {
-        mockDevice.currentStates = {position: 57};
+        mockDevice.getPosition.mockReturnValue(57);
 
         let current = await target.getPosition();
         expect(current).toBe(57);
     });
 
     test('setPosition callback is being called', async () => {
-        jest.useFakeTimers();
-
-        mockDevice.cancelCurrentExecution = jest.fn();
-        mockDevice.executeCommand = jest.fn();
+        mockDevice.setPosition = jest.fn();
 
         await target.setTargetPosition(100, jest.fn());
 
-        expect(mockDevice.executeCommand).toHaveBeenCalled();
+        expect(mockDevice.setPosition).toHaveBeenCalled();
     });
 
     test('setPosition to close a window covering accessory.', async () => {
         jest.useFakeTimers();
 
         target.cachedPosition = 100;
-        target.getPosition = jest.fn().mockReturnValue(57);
+        mockDevice.getPosition = jest.fn().mockReturnValue(57);
+        mockDevice.setPosition.mockResolvedValue();
         await target.setTargetPosition(0, jest.fn());
 
         expect(target.positionState.updateValue)
             .toHaveBeenNthCalledWith(1, PositionState.DECREASING);
-        expect(mockDevice.executeCommand).toHaveBeenCalled();
+        expect(mockDevice.setPosition).toHaveBeenCalled();
     });
 
     test('when a device state changed event is received while opening blinds, position is updated', () => {
         jest.useFakeTimers();
 
         target.isCommandRunning = true;
-        target.currentPosition.value = 0;
+        mockDevice.getPosition = jest.fn().mockReturnValue(0);
         target.cachedTargetPosition = 50;
         const event = new DeviceStateChangedEvent(mockConsole, 123, 'abc', 
             new DeviceState([ { "name": "core:ClosureState", "type": 1, "value": "93" } ]));
 
         target.onEvent(event);
 
-        expect(target.currentPosition.updateValue).toHaveBeenCalledWith(100 - 93); 
+        expect(target.currentPosition.updateValue).toHaveBeenCalled(); 
         expect(target.cachedTargetPosition).toBe(50);
         expect(target.positionState.updateValue).toHaveBeenCalledWith(target.PositionState.INCREASING);
         expect(target.positionState.updateValue).not.toHaveBeenCalledWith(target.PositionState.STOPPED);
@@ -112,13 +110,9 @@ describe('window-covering', () => {
     test('when blinds are reaching the target position, the position state is set to STOPPED', () => {
         jest.useFakeTimers();
 
-        let mockvalue = jest.fn()
+        mockDevice.getPosition
             .mockReturnValueOnce(0)
             .mockReturnValue(99);
-
-        Object.defineProperty(target.currentPosition, "value", {
-            get: mockvalue
-        });
 
         target.cachedTargetPosition = 100;
         target.isCommandRunning = true;
@@ -135,13 +129,9 @@ describe('window-covering', () => {
     test('when blinds are closing, target is not changed by error to 100 if pos overreaches', () => {
         jest.useFakeTimers();
 
-        let mockvalue = jest.fn()
+        mockDevice.getPosition
             .mockReturnValueOnce(0)
             .mockReturnValue(51);
-
-        Object.defineProperty(target.currentPosition, "value", {
-            get: mockvalue
-        });
 
         target.cachedTargetPosition = 50;
         target.isCommandRunning = true;
@@ -158,13 +148,9 @@ describe('window-covering', () => {
     test('On state changed event, window covering is able to infer target position (increase)', () => {
         jest.useFakeTimers();
 
-        let mockvalue = jest.fn()
+        mockDevice.getPosition
             .mockReturnValueOnce(0)
             .mockReturnValue(80);
-
-        Object.defineProperty(target.currentPosition, "value", {
-            get: mockvalue
-        });
 
         target.cachedTargetPosition = -1;
         const event = new DeviceStateChangedEvent(mockConsole, 123, 'abc', 
@@ -199,10 +185,7 @@ describe('window-covering', () => {
     test('When a new execution registers, the command is processed', () => {
         jest.useFakeTimers();
 
-        let mockvalue = jest.fn().mockReturnValueOnce(0);
-        Object.defineProperty(target.currentPosition, "value", {
-            get: mockvalue
-        });
+        mockDevice.getPosition.mockReturnValueOnce(0);
 
         target.cachedTargetPosition = 0;
         const event = new ExecutionRegisteredEvent(mockConsole, 123, 'abc', 'deviceURL',
@@ -240,6 +223,7 @@ describe('window-covering', () => {
     });
 
     test('updatePositionState increasing', () => {
+        mockDevice.getPosition.mockReturnValue(0);
         target.currentPosition.value = 0;
         target.updatePositionState(100);
         expect(target.positionState.updateValue)
@@ -247,36 +231,24 @@ describe('window-covering', () => {
     });
 
     test('updatePositionState decreasing', () => {
-        target.cachedPosition = 100;
+        mockDevice.getPosition.mockReturnValue(100);
         target.updatePositionState(0);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.DECREASING);
     });
 
     test('updatePositionState stopped', () => {
-        target.cachedPosition = 100;
+        mockDevice.getPosition.mockReturnValue(100);
         target.updatePositionState(100);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.STOPPED);
     });
 
     test('updatePositionState is considered as stopped when at 1% from target', () => {
-        target.cachedPosition = 99;
+        mockDevice.getPosition.mockReturnValue(99);
         target.updatePositionState(100);
         expect(target.positionState.updateValue)
             .toHaveBeenCalledWith(PositionState.STOPPED);
-    });
-
-    test('Convert from Somfy to Homekit', () => {
-        expect(target.fromSomfy(0)).toBe(-90);
-        expect(target.fromSomfy(100)).toBe(90);
-        expect(target.fromSomfy(50)).toBe(0);
-    });
-
-    test('Convert from Homekit to Somfy', () => {
-        expect(target.toSomfy(-90)).toBe(0);
-        expect(target.toSomfy(0)).toBe(50);
-        expect(target.toSomfy(90)).toBe(100);
     });
 
     afterEach(() => {
@@ -301,8 +273,10 @@ describe('window-covering', () => {
     function createMockDevice() {
         mockDevice = jest.mock();
         mockDevice.isTwoWay = true;
+        mockDevice.getPosition = jest.fn();
+        mockDevice.setPosition = jest.fn();
+        mockDevice.mergeStates = jest.fn();
         mockDevice.hasCommand = jest.fn().mockReturnValue(true);
-        mockDevice.cancelCurrentExecutionByCommand = jest.fn().mockResolvedValue();
         mockDevice.executeCommand = jest.fn().mockResolvedValue();
     }
 

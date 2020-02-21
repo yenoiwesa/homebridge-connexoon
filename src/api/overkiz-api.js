@@ -1,6 +1,6 @@
 const { cachePromise } = require('../utils');
 const Execution = require('./execution');
-const Device = require('./device');
+const deviceFactory = require('./device/device-factory');
 
 class OverkizAPI {
     constructor(requestHandler, log) {
@@ -64,7 +64,7 @@ class OverkizAPI {
                     })
             );
 
-            return jsonDevices.map(json => new Device(json, this));
+            return jsonDevices.map(json => deviceFactory(json, this));
         } catch (result) {
             this.log.error('Failed to get device list', result.error);
 
