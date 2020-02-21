@@ -4,13 +4,13 @@ const IOWindowCovering = require('./services/io-window-covering');
 const RTS = {
     Screen: RTSWindowCovering,
     RollerShutter: RTSWindowCovering,
-    // Awning: RTSWindowCovering // TODO: Fix awning open state
+    Awning: RTSWindowCovering // TODO: Fix awning open state
 };
 
 const IO = {
     Screen: IOWindowCovering,
     RollerShutter: IOWindowCovering,
-    //Awning: IOWindowCovering, // TODO: Fix awning open state
+    Awning: IOWindowCovering, // TODO: Fix awning open state
     ExteriorVenetianBlind: IOWindowCovering
 };
 
