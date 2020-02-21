@@ -1,21 +1,21 @@
-const OneWayWindowCovering = require('./services/one-way-window-covering');
-const TwoWayWindowCovering = require('./services/two-way-window-covering');
+const RTSWindowCovering = require('./services/rts-window-covering');
+const IOWindowCovering = require('./services/io-window-covering');
 
-const ONE_WAY = {
-    Screen: OneWayWindowCovering,
-    RollerShutter: OneWayWindowCovering,
-    Awning: OneWayWindowCovering
+const RTS = {
+    Screen: RTSWindowCovering,
+    RollerShutter: RTSWindowCovering,
+    // Awning: RTSWindowCovering // TODO: Fix awning open state
 };
 
-const TWO_WAY = {
-    Screen: TwoWayWindowCovering,
-    RollerShutter: TwoWayWindowCovering,
-    Awning: TwoWayWindowCovering,
-    ExteriorVenetianBlind: TwoWayWindowCovering
+const IO = {
+    Screen: IOWindowCovering,
+    RollerShutter: IOWindowCovering,
+    //Awning: IOWindowCovering, // TODO: Fix awning open state
+    ExteriorVenetianBlind: IOWindowCovering
 };
 
 function serviceFactory({homebridge, log, eventsController, device, config}) {
-    let serviceClass = (device.isTwoWay ? TWO_WAY[device.type] : ONE_WAY[device.type]);
+    let serviceClass = (device.supportsIOProtocol ? IO[device.type] : RTS[device.type]);
 
     if (serviceClass) {
         return new serviceClass({ homebridge, eventsController, log, device, config });

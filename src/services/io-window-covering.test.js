@@ -1,4 +1,4 @@
-const WindowCovering = require('./two-way-window-covering');
+const WindowCovering = require('./io-window-covering');
 const DeviceState = require('../api/device/device-states');
 const Command = require('../api/command');
 const DeviceStateChangedEvent = require('../api/events/device-state-changed-event');
@@ -100,7 +100,7 @@ describe('window-covering', () => {
 
         target.onEvent(event);
 
-        expect(target.currentPosition.updateValue).toHaveBeenCalled(); 
+        expect(mockDevice.mergeStates).toHaveBeenCalled(); 
         expect(target.cachedTargetPosition).toBe(50);
         expect(target.positionState.updateValue).toHaveBeenCalledWith(target.PositionState.INCREASING);
         expect(target.positionState.updateValue).not.toHaveBeenCalledWith(target.PositionState.STOPPED);
@@ -121,7 +121,7 @@ describe('window-covering', () => {
 
         target.onEvent(event);
 
-        expect(target.currentPosition.updateValue).toHaveBeenCalledWith(99); 
+        expect(mockDevice.mergeStates).toHaveBeenCalled(); 
         expect(target.cachedTargetPosition).toBe(100);
         expect(target.positionState.updateValue).toHaveBeenLastCalledWith(target.PositionState.STOPPED);
     });
@@ -140,7 +140,6 @@ describe('window-covering', () => {
 
         target.onEvent(event);
 
-        expect(target.currentPosition.updateValue).toHaveBeenCalledWith(51); 
         expect(target.cachedTargetPosition).toBe(50);
         expect(target.positionState.updateValue).toHaveBeenLastCalledWith(target.PositionState.STOPPED);
     });
@@ -272,7 +271,7 @@ describe('window-covering', () => {
 
     function createMockDevice() {
         mockDevice = jest.mock();
-        mockDevice.isTwoWay = true;
+        mockDevice.supportsIOProtocol = true;
         mockDevice.getPosition = jest.fn();
         mockDevice.setPosition = jest.fn();
         mockDevice.mergeStates = jest.fn();

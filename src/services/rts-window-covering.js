@@ -24,7 +24,7 @@ const DEFAULT_COMMANDS = [
     { command: Command.CLOSE, position: Position.CLOSED },
 ];
 
-class WindowCovering extends AbstractService {
+class RTSWindowCovering extends AbstractService {
     constructor({ homebridge, log, eventsController, device, config }) {
         super({ homebridge, log, device, config });
 
@@ -172,4 +172,4 @@ class WindowCovering extends AbstractService {
     }
 }
 
-module.exports = WindowCovering;
+module.exports = RTSWindowCovering;

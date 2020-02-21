@@ -1,12 +1,12 @@
 const AbstractService = require('./abstract-service');
-const EventType = require('./../api/events/event-type');
+const EventType = require('../api/events/event-type');
 
 let Service;
 let Characteristic;
 
 const MAX_TIMEOUT = 60 * 1000;
 
-class TwoWayWindowCovering extends AbstractService {
+class IOWindowCovering extends AbstractService {
 
     constructor({ homebridge, log, eventsController, device, config }) {
         super({ homebridge, log, device, config });
@@ -15,7 +15,7 @@ class TwoWayWindowCovering extends AbstractService {
         this.heartBeatTimeout = null;
         this.cachedTargetPosition = -1;
 
-        if (!device.isTwoWay) {
+        if (!device.supportsIOProtocol) {
             throw new Error('Wrong Service for a one way window covering device');
         } 
 
@@ -84,7 +84,6 @@ class TwoWayWindowCovering extends AbstractService {
         let prevPosition = this.device.getPosition();
         this.device.mergeStates(event.deviceStates);
         let position = this.device.getPosition();
-        this.currentPosition.updateValue(position);
         this.inferTargetPositionOnSilenceExecution(position, prevPosition);
         this.updatePositionState(this.cachedTargetPosition);
 
@@ -247,4 +246,4 @@ class TwoWayWindowCovering extends AbstractService {
     }
 }
 
-module.exports = TwoWayWindowCovering;
+module.exports = IOWindowCovering;

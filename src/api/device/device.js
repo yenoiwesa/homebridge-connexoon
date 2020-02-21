@@ -33,7 +33,7 @@ class Device {
         return this.json.widget;
     }
 
-    get isTwoWay() {
+    get supportsIOProtocol() {
         return !!(this.json.controllableName && this.json.controllableName.startsWith('io:'));
     }
     
