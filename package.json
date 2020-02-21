@@ -16,7 +16,10 @@
     "connexoon",
     "tahoma"
   ],
-  "authors": ["Matthieu Di Berardino", "Renault John Lecoultre"],
+  "authors": [
+    "Matthieu Di Berardino",
+    "Renault John Lecoultre"
+  ],
   "license": "Apache 2",
   "devDependencies": {
     "eslint": "^6.1.0",
