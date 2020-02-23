@@ -126,6 +126,10 @@ class Device {
         }
     }
 
+    resetPosition(value) {
+        // noop
+    }
+
     mergeStates(states) {
         return this.currentStates.mergeStates(states);
     }

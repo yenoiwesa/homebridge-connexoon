@@ -277,6 +277,7 @@ describe('window-covering', () => {
         mockDevice.mergeStates = jest.fn();
         mockDevice.hasCommand = jest.fn().mockReturnValue(true);
         mockDevice.executeCommand = jest.fn().mockResolvedValue();
+        mockDevice.resetPosition = jest.fn();
     }
 
     function createMockEventsController() {
