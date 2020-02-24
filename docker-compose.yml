@@ -6,7 +6,7 @@ services:
         restart: on-failure
         ports: 
             - "51888:51888"
-            - "9222:9222"
+            - "9229:9229"
         volumes: 
             - /homebridge-connexoon/node_modules
             - .:/homebridge-connexoon
