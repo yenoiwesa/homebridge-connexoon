@@ -21,6 +21,7 @@ class Awning extends Device {
     resetPosition(value) {
         this.currentStates.setStateValue(STATE, value);
     }
+
 }
 
 module.exports = Awning;

@@ -119,7 +119,7 @@ class IOWindowCovering extends AbstractService {
 
         this.isCommandRunning = true;
         this.execId = event.execId;
-        this.cachedTargetPosition = event.targetPosition;
+        this.cachedTargetPosition = this.device.convertPosition(event.targetPosition);
         this.targetPosition.updateValue(this.cachedTargetPosition);
         this.updatePositionState(this.cachedTargetPosition);
 

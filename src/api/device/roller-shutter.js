@@ -9,19 +9,19 @@ class RollerShutter extends Device {
     }
 
     async setPosition(value) {
-        await this.executeCommand(CLOSURE, [this.toggleDevicePosition(value)]);
+        await this.executeCommand(CLOSURE, [this.convertPosition(value)]);
     }
 
     getPosition() {
         let position = this.currentStates.getStateValue(STATE);
-        return this.toggleDevicePosition(position);
+        return this.convertPosition(position);
     }
 
     resetPosition(value) {
-        this.currentStates.setStateValue(STATE, this.toggleDevicePosition(value));
+        this.currentStates.setStateValue(STATE, this.convertPosition(value));
     }
 
-    toggleDevicePosition(value) {
+    convertPosition(value) {
         return 100 - value;
     }
 }

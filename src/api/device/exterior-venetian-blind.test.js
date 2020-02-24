@@ -24,7 +24,7 @@ describe('ExteriorVenetianBlind', () => {
         expect(target.getSlateOrientation()).toBe(-90);
     });
 
-    test('Convert from Somfy to Homekit', () => {
+    test('Convert orientation from Somfy to Homekit', () => {
         let mockAPI = jest.mock();
         let target = new ExteriorVenetianBlind({states: []}, mockAPI);
         expect(target.fromSomfyOrientation(0)).toBe(-90);
@@ -32,12 +32,19 @@ describe('ExteriorVenetianBlind', () => {
         expect(target.fromSomfyOrientation(50)).toBe(0);
     });
 
-    test('Convert from Homekit to Somfy', () => {
+    test('Convert orientation from Homekit to Somfy', () => {
         let mockAPI = jest.mock();
         let target = new ExteriorVenetianBlind({states: []}, mockAPI);
         expect(target.toSomfyOrientation(-90)).toBe(0);
         expect(target.toSomfyOrientation(0)).toBe(50);
         expect(target.toSomfyOrientation(90)).toBe(100);
+    });
+
+
+    test('Convert position', () => {
+        let mockAPI = jest.mock();
+        let target = new ExteriorVenetianBlind({states: []}, mockAPI)
+        expect(target.convertPosition(23)).toBe(77);
     });
 
 

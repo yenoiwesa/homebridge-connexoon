@@ -130,6 +130,10 @@ class Device {
         // noop
     }
 
+    convertPosition(value) {
+        return value; // noop
+    }
+
     mergeStates(states) {
         return this.currentStates.mergeStates(states);
     }

@@ -15,14 +15,14 @@ class ExteriorVenetianBlind extends Device {
 
     getPosition() {
         let position = this.currentStates.getStateValue(POSITION_STATE);
-        return this.toggleDevicePosition(position);
+        return this.convertPosition(position);
     }
 
     resetPosition(value) {
-        this.currentStates.setStateValue(POSITION_STATE, this.toggleDevicePosition(value));
+        this.currentStates.setStateValue(POSITION_STATE, this.convertPosition(value));
     }
 
-    toggleDevicePosition(value) {
+    convertPosition(value) {
         return 100 - value;
     }
 
@@ -52,7 +52,7 @@ class ExteriorVenetianBlind extends Device {
 
     async setPositionAndSlateOrientation(position, orientation) {
         await this.executeCommand(CLOSURE_AND_ORIENTATION, [
-            this.toggleDevicePosition(position),
+            this.convertPosition(position),
             this.toSomfyOrientation(orientation)
         ]);
     }

@@ -21,4 +21,10 @@ describe('RollerShutter', () => {
         expect(target.getPosition()).toBe(100);
     });
 
+    test('Convert position', () => {
+        let mockAPI = jest.mock();
+        let target = new RollerShutter({states: []}, mockAPI)
+        expect(target.convertPosition(23)).toBe(77);
+    });
+
 });

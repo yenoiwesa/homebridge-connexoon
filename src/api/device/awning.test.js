@@ -20,4 +20,10 @@ describe('Awning', () => {
         expect(target.getPosition()).toBe(0);
     });
 
+    test('Converting position is a noop for awing', () => {
+        let mockAPI = jest.mock();
+        let target = new Awning({states: [{name: 'core:DeploymentState', value: 0}]}, mockAPI);
+        expect(target.convertPosition(23)).toBe(23);
+    });
+
 });

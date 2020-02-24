@@ -185,7 +185,7 @@ describe('window-covering', () => {
         jest.useFakeTimers();
 
         mockDevice.getPosition.mockReturnValueOnce(0);
-
+        mockDevice.convertPosition.mockReturnValue(100);
         target.cachedTargetPosition = 0;
         const event = new ExecutionRegisteredEvent(mockConsole, 123, 'abc', 'deviceURL',
             new Command('setPosition' , [{ value: 0, type: 1 }]));
@@ -275,6 +275,7 @@ describe('window-covering', () => {
         mockDevice.getPosition = jest.fn();
         mockDevice.setPosition = jest.fn();
         mockDevice.mergeStates = jest.fn();
+        mockDevice.convertPosition = jest.fn();
         mockDevice.hasCommand = jest.fn().mockReturnValue(true);
         mockDevice.executeCommand = jest.fn().mockResolvedValue();
         mockDevice.resetPosition = jest.fn();
