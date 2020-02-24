@@ -6,7 +6,7 @@
     "configurations": [
         {
             "type": "node",
-            "name": "vscode-jest-tests",
+            "name": "Unit Test",
             "request": "launch",
             "args": [
                 "--runInBand"
@@ -21,12 +21,12 @@
             "platform": "node",
             "type": "docker",
             "request": "launch",
-            "name": "In Docker",
+            "name": "Debug",
             "preLaunchTask": "docker-run: debug",
             "node": {
                 "remoteRoot": "/homebridge-connexoon",
                 "localRoot": "${workspaceFolder}"
             }
-          }
+        }
     ]
 }

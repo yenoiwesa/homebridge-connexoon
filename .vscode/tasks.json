@@ -20,7 +20,7 @@
         }],
         "volumes": [
           {
-            "localPath": null,
+            "localPath": "null",
             "containerPath": "/homebridge-connexoon/node_modules",
           },
           {
