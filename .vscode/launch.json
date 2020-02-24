@@ -18,18 +18,15 @@
             "program": "${workspaceFolder}/node_modules/jest/bin/jest"
         },
         {
-            "type": "node",
+            "platform": "node",
+            "type": "docker",
             "request": "launch",
-            "args": [
-                "-D",
-                "-U", "${workspaceFolder}/homebridge-home",
-                "-P", "${workspaceFolder}/" 
-             ],
-            "name": "Launch HomeBridge",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "program": "${workspaceFolder}/node_modules/homebridge/bin/homebridge"
-        }
+            "name": "In Docker",
+            "preLaunchTask": "docker-run: debug",
+            "node": {
+                "remoteRoot": "/homebridge-connexoon",
+                "localRoot": "${workspaceFolder}"
+            }
+          }
     ]
 }
