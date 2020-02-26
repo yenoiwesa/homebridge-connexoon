@@ -9,9 +9,7 @@
             "name": "Unit Test",
             "request": "launch",
             "args": [
-                "--runInBand",
-                "--detectOpenHandles",
-                "--watch"
+                "--runInBand"
             ],
             "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",

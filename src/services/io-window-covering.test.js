@@ -46,8 +46,8 @@ describe('window-covering', () => {
     test('getTargetPosition when not known next target', (done) => {
         target.getPosition = jest.fn().mockReturnValue(57);
 
-        target.getTargetPosition(function(error, target) {
-            expect(target).toBe(57);
+        target.getTargetPosition(function(error, value) {
+            expect(value).toBe(57);
             done();
         });
     });
