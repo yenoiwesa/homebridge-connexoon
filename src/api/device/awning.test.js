@@ -16,8 +16,20 @@ describe('Awning', () => {
 
     test('Awning returns homekit position', async () => {
         let mockAPI = jest.mock();
+        let target = new Awning({states: [{name: 'core:DeploymentState', value: 10}]}, mockAPI);
+        expect(target.getPosition()).toBe(10);
+    });
+    
+    test('Awning is cap at 99%', async () => {
+        let mockAPI = jest.mock();
+        let target = new Awning({states: [{name: 'core:DeploymentState', value: 100}]}, mockAPI);
+        expect(target.getPosition()).toBe(99);
+    });
+    
+    test('Awning is cap at 1%', async () => {
+        let mockAPI = jest.mock();
         let target = new Awning({states: [{name: 'core:DeploymentState', value: 0}]}, mockAPI);
-        expect(target.getPosition()).toBe(0);
+        expect(target.getPosition()).toBe(1);
     });
 
     test('Converting position is a noop for awing', () => {

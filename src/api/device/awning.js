@@ -10,16 +10,26 @@ class Awning extends Device {
     }
 
     async setPosition(value) {
-        await this.executeCommand(CLOSURE, [value]);
+        await this.executeCommand(CLOSURE, [this.convertPosition(value)]);
     }
 
     getPosition() {
         let position = this.currentStates.getStateValue(STATE);
-        return position;
+        return this.convertPosition(position);
     }
 
     resetPosition(value) {
-        this.currentStates.setStateValue(STATE, value);
+        this.currentStates.setStateValue(STATE, this.convertPosition(value));
+    }
+
+    convertPosition(value) {
+        if (value == 100) {
+            value = 99;
+        } else if (value == 0) {
+            value = 1;
+        }
+        
+        return value;
     }
 
 }
