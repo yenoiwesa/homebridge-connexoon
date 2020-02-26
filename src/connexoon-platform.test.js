@@ -43,7 +43,7 @@ describe('connexion-platform', () => {
         });
     });
 
-    
+    /*
     test('Awning are registered', done => {
         let listDevices = [
             new Device({ uiClass: "Awning", label: "Awning", deviceURL: "6" }, null),
@@ -55,6 +55,7 @@ describe('connexion-platform', () => {
             done();
         });
     });
+    */
    
     test('Unknown devices are ignored', done => {
         let listDevices = [
