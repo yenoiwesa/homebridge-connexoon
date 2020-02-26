@@ -243,7 +243,7 @@ describe('EventsController', () => {
     });
 
     afterEach(() => {
-    
+        jest.clearAllTimers();
     });
 
     function createMockConsole() {

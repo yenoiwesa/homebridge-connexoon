@@ -56,7 +56,7 @@ describe('connexion-platform', () => {
         });
     });
     */
-   
+
     test('Unknown devices are ignored', done => {
         let listDevices = [
             new Device({ uiClass: "Unknown", label: "Unknown", deviceURL: "6" }, null),
@@ -74,6 +74,13 @@ describe('connexion-platform', () => {
             const mockService = { getHomekitService: jest.fn() }
             let factory = function({homebridge, log, device, config}) {
                 return device.type == "Unknown" ? undefined : mockService;
+            }
+            return factory;
+        });
+        jest.mock('./api/events/events-controller-factory', () => {
+            const mockService = { start: jest.fn().mockResolvedValue() }
+            let factory = function({mockConsole, mockOverkizApi}) {
+                return mockService;
             }
             return factory;
         });
