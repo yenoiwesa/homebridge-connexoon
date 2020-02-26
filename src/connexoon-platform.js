@@ -1,7 +1,9 @@
 const { get } = require('lodash');
-const OverkizAPI = require('./api/overkiz-api');
+const serviceFactory = require('./service-factory');
+const overkizAPIFactory = require('./api/overkiz-api-factory');
 const Accessory = require('./accessory');
-const ServicesMapping = require('./services-mapping');
+
+const eventsControllerFactory = require('./api/events/events-controller-factory');
 
 let homebridge;
 
@@ -23,47 +25,21 @@ class ConnexoonPlatform {
 
         this.log(`${PLATFORM_NAME} Init`);
 
-        this.overkiz = new OverkizAPI(config, log);
+        this.overkiz = overkizAPIFactory(config, log);
+        this.eventsController = eventsControllerFactory(log, this.overkiz);
     }
 
     /**
      * Called by Homebridge at platform init to list accessories.
      */
     async accessories(callback) {
-        // retrieve devices defined in overkiz
         try {
             const devices = await this.overkiz.listDevices();
 
             for (const device of devices) {
-                // unsupported device types are skipped
-                if (device.type in ServicesMapping) {
-                    const accessory = new Accessory({
-                        homebridge,
-                        log: this.log,
-                        device,
-                    });
-
-                    const serviceClasses = ServicesMapping[device.type];
-
-                    // retrieve accessory config
-                    const config = get(this.config, ['devices', device.name]);
-
-                    for (const serviceClass of serviceClasses) {
-                        const service = new serviceClass({
-                            homebridge,
-                            log: this.log,
-                            device,
-                            config,
-                        });
-
-                        accessory.addService(service.getHomekitService());
-                    }
-
-                    this.platformAccessories.push(accessory.homekitAccessory);
-                } else {
-                    this.log.debug(`Ignored device of type ${device.type}`);
-                }
+                this._registerDevice(device);
             }
+
             this.log.debug(`Found ${this.platformAccessories.length} devices`);
         } catch (error) {
             // do nothing in case of error
@@ -71,6 +47,27 @@ class ConnexoonPlatform {
         } finally {
             callback(this.platformAccessories);
         }
+
+        await this.eventsController.start();
+    }
+
+    _registerDevice(device) {
+        const config = get(this.config, ['devices', device.name]);
+        let service = serviceFactory({homebridge, log: this.log, eventsController: this.eventsController, device, config});
+
+        if (!service) {
+            this.log.debug(`Ignored device of type ${device.type}`);
+            return;
+        }
+
+        const accessory = new Accessory({
+            homebridge,
+            log: this.log,
+            device,
+        });
+
+        accessory.addService(service.getHomekitService());
+        this.platformAccessories.push(accessory.homekitAccessory);
     }
 }
 

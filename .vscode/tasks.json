@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "docker-build",
+      "type": "docker-build",
+      "platform": "node"
+    },
+    {
+      "label": "docker-run: debug",
+      "type": "docker-run",
+      "dependsOn": [
+        "docker-build"
+      ],
+      "dockerRun": {
+        "command": "node --inspect=0.0.0.0 /usr/local/bin/homebridge -D -U ./homebridge-home -P .",
+        "ports": [{
+          "containerPort": 51888,
+          "hostPort": 51888
+        }],
+        "volumes": [
+          {
+            "localPath": "null",
+            "containerPath": "/homebridge-connexoon/node_modules",
+          },
+          {
+            "localPath": "${workspaceFolder}/",
+            "containerPath": "/homebridge-connexoon"
+          }]
+      },
+      "node": {
+        "enableDebugging": true
+      }
+    }
+  ]
+}

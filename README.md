@@ -2,13 +2,13 @@
     <img src="documentation/logo.png" width="300" alt="Connexoon logo">
 </p>
 
-# Homebridge Connexoon for RTS
+# Homebridge Connexoon for RTS and IO
 
-A Homebridge plugin providing support for the **Connexoon** (Somfy), **TaHoma** (Somfy) and **Cozytouch** (Atlantic, Thermor, Sauter) platforms and accessories working over the RTS protocol.
+A Homebridge plugin providing support for the **Connexoon** (Somfy), **TaHoma** (Somfy) and **Cozytouch** (Atlantic, Thermor, Sauter) platforms and accessories working over the RTS and IO protocol.
 
 This plugin's implementation is inspired by and initially based on Romain Duboc's [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin.
 
-This plugin currently does not support Somfy IO devices, only RTS devices. Use the [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin if you have IO devices in your installation.
+This plugin support for Somfy IO devices is limited. Extending the pluging to include more device should be relatively easy. Don't hesitate to submit a PR with extensions. You can also consider using the [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin.
 
 # Requirements
 
@@ -32,6 +32,14 @@ npm install -g homebridge-connexoon
 3. Update your configuration file. See bellow for a sample.
 
 > **Note:** it is also possible to install this plugin in a local `npm` package instead using the homebridge option `--plugin-path`.
+
+# Running tests
+
+This plugin comes with a set of unit tests. To run them, do the following:
+
+```sh
+npm test
+```
 
 # Configuration
 
@@ -70,7 +78,7 @@ The platform can be configured with the following parameters:
 
 Each device can receive additional configurations according to its device type registered in the Connexoon app (or equivalent).
 
-### Window Coverings
+### Window Coverings (RTS Only)
 
 Screens (such as window blinds) and Roller Shutters accept the `commands` configuration:
 
@@ -99,7 +107,7 @@ Note that the above configuration is the default for a Screen, and thus does not
 
 #### `commands` - Array - Optional
 
-An Array of Objects mapping RTS commands (one of `open`, `my`, `close`) to homekit window covering positions (integer from `0` to `100`), and vice versa.
+An Array of Objects mapping RTS commands (one of `open`, `my`, `close`) to homekit window covering positions (integer from `0` to `100`), and vice versa. This is not supported for IO devices.
 
 The default value is:
 
@@ -138,11 +146,17 @@ Currently, the platform only supports RTS devices of the following type:
 
 -   **Screen**
 -   **Roller Shutter**
+-   **ExteriorVenetianBlind (IO only)**
+-   **Awning (IO only)**
 
 Support for more types may be added as needed.
 
-In addition, since the RTS protocol is one-way, devices status is unknown and must be inferred from the last command that was submitted to the device.
+For RTS devices, which is a one-way protocol, devices status is unknown and must be inferred from the last command that was submitted to the device.
+IO supports two-way communication and allow more advance automation scenarios.
 
 # Contribute
 
 Please feel free to contribute to this plugin by adding support for new device types, implementing new features or fixing bugs. Pull requests are welcome.
+
+ - Matthieu Di Berardino: Initial plugin and RTS devices implementations.
+ - Renault John Lecoultre: IO devices implementations and unit testing.

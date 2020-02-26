@@ -1,0 +1,12 @@
+version: '3'
+
+services: 
+    homebridge:
+        build: .
+        restart: on-failure
+        ports: 
+            - "51888:51888"
+            - "9229:9229"
+        volumes: 
+            - /homebridge-connexoon/node_modules
+            - .:/homebridge-connexoon
