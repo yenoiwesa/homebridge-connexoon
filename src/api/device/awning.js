@@ -23,12 +23,6 @@ class Awning extends Device {
     }
 
     convertPosition(value) {
-        if (value == 100) {
-            value = 99;
-        } else if (value == 0) {
-            value = 1;
-        }
-        
         return value;
     }
 
