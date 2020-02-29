@@ -1,6 +1,7 @@
 node_modules
 coverage
 .DS_Store
+dataset
 
 # homebridge home directory
 homebridge-home/*

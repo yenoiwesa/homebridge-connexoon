@@ -15,7 +15,7 @@ class ExecutionRegisteredEvent extends Event {
             return 0;
         }
 
-        return 100 - this.command.parameters[0].value;
+        return parseInt(this.command.parameters[0].value) || 0;
     }
 
     get isAffectingPosition() {
