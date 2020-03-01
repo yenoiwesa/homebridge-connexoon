@@ -4,16 +4,6 @@ class DeviceStates {
         this.states = states || [];
     }
 
-    get position() {
-        let position = this.getStateValue("core:ClosureState");
-        if (position == undefined) {
-            // for awning and velux
-            position = this.getStateValue("core:DeploymentState");
-        }
-
-        return position != undefined ? 100 - position : position;
-    }
-
     get hasPositionState() {
         return this.hasState("core:ClosureState") || this.hasState('core:DeploymentState');
     }

@@ -182,8 +182,8 @@ class IOWindowCovering extends AbstractService {
     resetCurrentAndTargetPosition(position) {
         this.device.resetPosition(position);
         this.cachedTargetPosition = position;
-        this.currentPosition.updateValue(position);
         this.targetPosition.updateValue(position);
+        this.currentPosition.updateValue(position);
     }
 
     clearHeartBeatTimeout() {
