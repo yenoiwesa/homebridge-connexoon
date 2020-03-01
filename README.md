@@ -138,6 +138,14 @@ It is possible to override this configuration so that, for instance, opening the
 
 In the configuration above, the `my` command is associated to the homekit position `100` (i.e. **open**). As it is the first item in the array, it will take precedence over the `open` command when the plugin will determine what command to send.
 
+# Automation
+
+As other plug-ins, homebridge-connexoon allows you to automate your blinds and awnings. Homebridge-connexoon fully supports `PositionState` like `Opening`, `Closing`, and `Stopped`. With the [Eve app](https://apps.apple.com/us/app/eve-for-homekit/id917695792), you can use those states as trigger for advance scenarios. For instance:
+
+- When my blinds are opening after sunrise and before sunset, switch off all lights in the room
+
+(IO device only) This plug-in is also listening for actions happening outside of homekit echo system. For instance, if you have SOMFY remote controls in your home to activate your blinds, homebridge-connexoon will detect when you are operating your blinds through those remote controls. This will allow a seamless integration and ensure your home app is always in sync with your physical devices.
+
 # Limitation
 
 I have created this homebridge plugin for my personal use, and thus it fits the purpose of my home's installation.
