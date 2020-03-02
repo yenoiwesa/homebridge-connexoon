@@ -28,17 +28,20 @@ describe('EventsController', () => {
         expect(target.listenerId).toBe(123);
     });
 
-    test('When registration fails, retry with exponential backoff', async () => {
+    test('When registration fails, retry with exponential backoff', async (done) => {
         jest.useFakeTimers();
+
 
         mockOverkizApi.registerEvents = jest.fn().mockRejectedValue('Oops');
         await target.registerEventController();
 
-        expect(mockOverkizApi.registerEvents).toHaveBeenCalled();
-        jest.advanceTimersByTime(2*1000);
-        expect(mockOverkizApi.registerEvents).toHaveBeenCalled();
-        jest.advanceTimersByTime(4*1000);
-        expect(mockOverkizApi.registerEvents).toHaveBeenCalled();
+        expect(setTimeout).toHaveBeenCalledTimes(1);
+        expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 2000);
+        jest.runOnlyPendingTimers();
+        expect(setTimeout).toHaveBeenCalledTimes(1);
+        expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 4000);
+        
+        expect(mockOverkizApi.registerEvents).toHaveBeenCalledTimes(3);
     });
 
     test('Events controller logs an error when failing to register for events', async () => {
@@ -58,7 +61,7 @@ describe('EventsController', () => {
         mockOverkizApi.unregisterEvent = jest.fn().mockRejectedValue('No way');
         await target.unregisterEventController();
 
-        expect(mockConsole.error).toHaveBeenCalled();
+        expect(mockConsole.warn).toHaveBeenCalled();
     });
 
     test('Events controller can add entries in the execution cache', () => {

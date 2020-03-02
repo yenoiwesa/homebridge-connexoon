@@ -67,6 +67,7 @@ class EventsController {
 
     async resetEventControllerRegistration() {
         this.log(`Trying to re-register to event listener`);
+        this.backoffTimer = null;
         await this.unregisterEventController();
         await this.registerEventController();
     }
@@ -197,7 +198,7 @@ class EventsController {
         try {
             await this.overkiz.unregisterEvent(this.listenerId);
         } catch (e) {
-            this.log.error(`Failed to unregister event listener`);
+            this.log.warn(`Failed to unregister event listener`);
         }
     }
 
