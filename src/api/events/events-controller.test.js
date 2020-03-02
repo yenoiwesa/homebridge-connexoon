@@ -28,20 +28,37 @@ describe('EventsController', () => {
         expect(target.listenerId).toBe(123);
     });
 
-    test('When registration fails, retry with exponential backoff', async (done) => {
+    test('When registration fails, retry with exponential backoff', async () => {
         jest.useFakeTimers();
 
-
         mockOverkizApi.registerEvents = jest.fn().mockRejectedValue('Oops');
+        mockOverkizApi.unregisterEvent = jest.fn().mockRejectedValue('Oops');
         await target.registerEventController();
 
         expect(setTimeout).toHaveBeenCalledTimes(1);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 2000);
-        jest.runOnlyPendingTimers();
+        expect(target.exponentialBackoffMs()).toBe(4000);
+    });
+
+    test('When registration fails, retry with exponential backoff retryEventsRegistration', async () => {
+        jest.useFakeTimers();
+
+        mockOverkizApi.registerEvents = jest.fn().mockRejectedValue('Oops');
+        mockOverkizApi.unregisterEvent = jest.fn().mockRejectedValue('Oops');
+
+        await target.retryEventsRegistration();
         expect(setTimeout).toHaveBeenCalledTimes(1);
+        expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 2000);
+
+        jest.runOnlyPendingTimers();
+        await target.retryEventsRegistration();
+        expect(setTimeout).toHaveBeenCalledTimes(2);
         expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 4000);
-        
-        expect(mockOverkizApi.registerEvents).toHaveBeenCalledTimes(3);
+
+        jest.runOnlyPendingTimers();
+        await target.retryEventsRegistration();
+        expect(setTimeout).toHaveBeenCalledTimes(3);
+        expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 8000);
     });
 
     test('Events controller logs an error when failing to register for events', async () => {
