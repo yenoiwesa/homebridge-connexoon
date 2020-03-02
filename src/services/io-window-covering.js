@@ -28,7 +28,7 @@ class IOWindowCovering extends AbstractService {
         this._mixinHAPServiceCharacteristics();
 
         eventsController.subscribe(device.id, this.onEvent.bind(this));
-        this.log.debug(`Creating window covering ${this.name}`);
+        this.log(`Creating window covering ${this.name}`);
     }
 
     _createHAPService() {
@@ -88,7 +88,7 @@ class IOWindowCovering extends AbstractService {
         this.updatePositionState(this.cachedTargetPosition);
 
         this.resetHeartBeat();
-        this.log.debug(`Updated position for ${this.name} is ${position}`);
+        this.log(`Updated position for ${this.name} is ${position}`);
 
         if (!this.isCommandRunning && this.hasStopped()) {
             this.markAsStopped();
@@ -143,7 +143,7 @@ class IOWindowCovering extends AbstractService {
     getPositionCallback(callback) {
         let current = this.getPosition();
 
-        this.log.debug(`Current position for ${this.name} is ${current}`);
+        this.log(`Current position for ${this.name} is ${current}`);
         callback(null, current);
     }
 
@@ -153,7 +153,7 @@ class IOWindowCovering extends AbstractService {
         }
         
         let target = this.cachedTargetPosition;
-        this.log.debug(`Target position for ${this.name} is ${target}`);
+        this.log(`Target position for ${this.name} is ${target}`);
 
         callback(null, target);
     }
