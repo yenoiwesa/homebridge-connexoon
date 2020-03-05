@@ -69,11 +69,13 @@ describe('window-covering', () => {
     });
 
     test('setPosition callback is being called', async () => {
+        jest.useFakeTimers();
         mockDevice.setPosition = jest.fn();
 
         await target.setTargetPosition(100, jest.fn());
 
         expect(mockDevice.setPosition).toHaveBeenCalled();
+        expect(setTimeout).toHaveBeenCalled();
     });
 
     test('setPosition to close a window covering accessory.', async () => {
@@ -87,6 +89,7 @@ describe('window-covering', () => {
         expect(target.positionState.updateValue)
             .toHaveBeenNthCalledWith(1, PositionState.DECREASING);
         expect(mockDevice.setPosition).toHaveBeenCalled();
+        expect(setTimeout).toHaveBeenCalled();
     });
 
     test('when a device state changed event is received while opening blinds, position is updated', () => {
