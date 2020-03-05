@@ -65,11 +65,10 @@ class EventsController {
         return Math.pow(2, this.backoffExponent) * 1000;
     }
 
-    async resetEventControllerRegistration() {
+    resetEventControllerRegistration() {
         this.log(`Trying to re-register to event listener`);
         this.backoffTimer = null;
-        await this.unregisterEventController();
-        await this.registerEventController();
+        this.registerEventController();
     }
 
     // As I don't know all execution exit point and I don't trust the system fully, I prefer to have
@@ -192,14 +191,6 @@ class EventsController {
 
     subscribe(deviceURL, cb) {
         this.subscribers[deviceURL] = cb;
-    }
-
-    async unregisterEventController() {
-        try {
-            await this.overkiz.unregisterEvent(this.listenerId);
-        } catch (e) {
-            this.log.warn(`Failed to unregister event listener`);
-        }
     }
 
     stopFetch() {
