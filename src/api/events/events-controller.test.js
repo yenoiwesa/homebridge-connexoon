@@ -69,18 +69,6 @@ describe('EventsController', () => {
         expect(mockConsole.error).toHaveBeenCalled();
     });
 
-    test('Events controller can unregister for events', async () => {
-        mockOverkizApi.unregisterEvent = jest.fn();
-        await target.unregisterEventController();
-    });
-
-    test('Events controller logs an error when failing to unregister for events', async () => {
-        mockOverkizApi.unregisterEvent = jest.fn().mockRejectedValue('No way');
-        await target.unregisterEventController();
-
-        expect(mockConsole.warn).toHaveBeenCalled();
-    });
-
     test('Events controller can add entries in the execution cache', () => {
         target.assignDeviceUrlToExecId('exec1', 'deviceurl1');
         target.assignDeviceUrlToExecId('exec2', 'deviceurl2');
