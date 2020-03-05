@@ -164,6 +164,7 @@ class IOWindowCovering extends AbstractService {
         this.log(`Set position to ${value} for ${this.name}`);
         this.cachedTargetPosition = value;
         this.updatePositionState(this.cachedTargetPosition);
+        this.resetHeartBeat();
 
         try {
             await this.device.setPosition(value);

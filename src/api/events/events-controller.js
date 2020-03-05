@@ -27,7 +27,6 @@ class EventsController {
             await this.registerEventController();
             this.fetchEventsLoop();
             this.startGarbageCollector();
-            this.log(`Event listener registered`)
         } catch (e) {
             this.log.error(`Failed to register event listener`);
         }
@@ -37,6 +36,7 @@ class EventsController {
         try {
             this.listenerId = await this.overkiz.registerEvents();
             this.setAsConnected();
+            this.log(`Event listener registered`)
         } catch (e) {
             this.log.error(`Failed to register event listener`);
             this.retryEventsRegistration();
