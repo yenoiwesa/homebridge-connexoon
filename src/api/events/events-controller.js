@@ -25,7 +25,6 @@ class EventsController {
     async start() {
         try {
             await this.registerEventController();
-            this.fetchEventsLoop();
             this.startGarbageCollector();
         } catch (e) {
             this.log.error(`Failed to register event listener`);
@@ -36,6 +35,7 @@ class EventsController {
         try {
             this.listenerId = await this.overkiz.registerEvents();
             this.setAsConnected();
+            this.fetchEventsLoop();
             this.log(`Event listener registered`)
         } catch (e) {
             this.log.error(`Failed to register event listener`);
@@ -97,7 +97,7 @@ class EventsController {
             await this.fetchEvents();
         } catch (e) {
             this.log.warn(`Failed to retrieve latest events, retry events registration.`);
-            this.retryEventsRegistration();
+            return this.retryEventsRegistration();
         }
 
         let timoutMs = this.activeCount ? this.activeFrequencyMs : this.refreshFrequencyMs;
