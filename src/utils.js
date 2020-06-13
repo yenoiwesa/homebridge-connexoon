@@ -1,5 +1,6 @@
-function cachePromise(promiseCallback, cacheDuration) {
+const cachePromise = (promiseCallback, cacheDuration) => {
     let promise;
+    let timeoutId;
 
     const reset = () => {
         promise = null;
@@ -11,11 +12,7 @@ function cachePromise(promiseCallback, cacheDuration) {
         }
 
         try {
-            promise = promiseCallback();
-
-            setTimeout(() => reset(), cacheDuration);
-
-            return await promise;
+            return await set(promiseCallback());
         } catch (error) {
             // reset cache on error
             reset();
@@ -24,7 +21,16 @@ function cachePromise(promiseCallback, cacheDuration) {
         }
     };
 
-    return { exec, reset };
-}
+    const set = (value) => {
+        promise = value;
+
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => reset(), cacheDuration);
+
+        return promise;
+    };
+
+    return { exec, reset, set };
+};
 
 module.exports = { cachePromise };

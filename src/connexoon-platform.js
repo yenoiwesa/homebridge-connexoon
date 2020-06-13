@@ -1,6 +1,6 @@
 const { get } = require('lodash');
 const OverkizAPI = require('./api/overkiz-api');
-const Accessory = require('./accessory');
+const Accessory = require('./accessories/accessory');
 const ServicesMapping = require('./services-mapping');
 
 let homebridge;
@@ -48,18 +48,20 @@ class ConnexoonPlatform {
                     // retrieve accessory config
                     const config = get(this.config, ['devices', device.name]);
 
-                    for (const serviceClass of serviceClasses) {
-                        const service = new serviceClass({
+                    for (const ServiceClass of serviceClasses) {
+                        const service = new ServiceClass({
                             homebridge,
                             log: this.log,
                             device,
                             config,
                         });
 
-                        accessory.addService(service.getHomekitService());
+                        accessory.addService(service);
                     }
 
-                    this.platformAccessories.push(accessory.homekitAccessory);
+                    this.platformAccessories.push(
+                        accessory.getHomekitAccessory()
+                    );
                 } else {
                     this.log.debug(`Ignored device of type ${device.type}`);
                 }
