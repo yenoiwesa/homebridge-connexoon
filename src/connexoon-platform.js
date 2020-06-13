@@ -8,7 +8,7 @@ let homebridge;
 const PLUGIN_NAME = 'homebridge-connexoon';
 const PLATFORM_NAME = 'Connexoon';
 
-const ConnexoonPlatformFactory = homebridgeInstance => {
+const ConnexoonPlatformFactory = (homebridgeInstance) => {
     homebridge = homebridgeInstance;
 
     return ConnexoonPlatform;

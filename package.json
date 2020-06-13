@@ -3,10 +3,14 @@
     "version": "1.2.0",
     "description": "A Homebridge plugin providing support for the Connexoon, TaHoma and Cozytouch platforms and accessories.",
     "main": "index.js",
+    "files": [
+        "/index.js",
+        "/src"
+    ],
     "scripts": {
         "start": "homebridge -D -U ./homebridge-home -P .",
         "debug": "ndb npm start",
-        "lint": "eslint ."
+        "lint": "npx prettier '**/*.{js,json,md,yml}' --check && eslint ."
     },
     "keywords": [
         "homebridge-plugin",
@@ -16,11 +20,12 @@
         "tahoma"
     ],
     "author": "Matthieu Di Berardino",
-    "license": "Apache 2",
+    "license": "Apache-2.0",
     "devDependencies": {
-        "eslint": "^6.1.0",
+        "eslint": "^7.2.0",
         "homebridge": "^0.4.50",
-        "ndb": "^1.1.5"
+        "ndb": "^1.1.5",
+        "prettier": "^2.0.5"
     },
     "engines": {
         "node": ">=10.0.0",

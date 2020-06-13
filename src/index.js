@@ -4,7 +4,7 @@ const {
     ConnexoonPlatformFactory,
 } = require('./connexoon-platform');
 
-module.exports = function(homebridge) {
+module.exports = (homebridge) => {
     // For platform plugin to be considered as dynamic platform plugin,
     // dynamic must be true. This is not our case.
     homebridge.registerPlatform(

@@ -26,14 +26,14 @@ class OverkizAPI {
     async listDevices() {
         try {
             const jsonDevices = await this.handler.sendRequestWithLogin(
-                request =>
+                (request) =>
                     request.get({
                         url: this.getUrlForQuery('/setup/devices'),
                         json: true,
                     })
             );
 
-            return jsonDevices.map(json => new Device(json, this));
+            return jsonDevices.map((json) => new Device(json, this));
         } catch (result) {
             this.log.error('Failed to get device list', result.error);
 
@@ -43,7 +43,7 @@ class OverkizAPI {
 
     async doGetCurrentExecutions() {
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.handler.sendRequestWithLogin((request) =>
                 request.get({
                     url: this.getUrlForQuery('/exec/current'),
                     json: true,
@@ -58,7 +58,7 @@ class OverkizAPI {
 
     async doGetExecutionsHistory() {
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.handler.sendRequestWithLogin((request) =>
                 request.get({
                     url: this.getUrlForQuery('/history/executions'),
                     json: true,
@@ -75,7 +75,7 @@ class OverkizAPI {
         const execution = new Execution(label, deviceURL, commands);
 
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.handler.sendRequestWithLogin((request) =>
                 request.post({
                     url: this.getUrlForQuery('/exec/apply'),
                     json: true,
@@ -93,7 +93,7 @@ class OverkizAPI {
         this.log.debug('Cancelling execution', execId);
 
         try {
-            return await this.handler.sendRequestWithLogin(request =>
+            return await this.handler.sendRequestWithLogin((request) =>
                 request.delete({
                     url: this.getUrlForQuery(`/exec/current/setup/${execId}`),
                     json: true,

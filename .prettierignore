@@ -1,0 +1,6 @@
+# homebridge home directory
+homebridge-home/*
+!homebridge-home/config.template.json
+
+# npm
+package-lock.json

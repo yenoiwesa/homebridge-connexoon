@@ -34,7 +34,9 @@ class Device {
             const {
                 actionGroup: { actions },
             } = exec;
-            const action = actions.find(action => action.deviceURL === this.id);
+            const action = actions.find(
+                (action) => action.deviceURL === this.id
+            );
 
             if (action) {
                 return exec;
@@ -54,7 +56,7 @@ class Device {
         const {
             actionGroup: { actions },
         } = currentExec;
-        const action = actions.find(action => action.deviceURL === this.id);
+        const action = actions.find((action) => action.deviceURL === this.id);
 
         return get(action, ['commands', 0, 'name']);
     }
@@ -71,7 +73,7 @@ class Device {
 
         for (const { commands } of passedExecs) {
             const command = commands.find(
-                command =>
+                (command) =>
                     command.deviceURL === this.id && command.state !== 'FAILED'
             );
 

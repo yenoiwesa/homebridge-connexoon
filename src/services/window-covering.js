@@ -159,7 +159,9 @@ class WindowCovering extends AbstractService {
                 break;
         }
 
-        const configItem = this.commands.find(item => item.command === command);
+        const configItem = this.commands.find(
+            (item) => item.command === command
+        );
         return get(configItem, 'position', Position.CLOSED);
     }
 
@@ -167,7 +169,7 @@ class WindowCovering extends AbstractService {
         // there is no default command, simply ignore values
         // that are not mapped (won't send anything)
         return get(
-            this.commands.find(item => item.position === target),
+            this.commands.find((item) => item.position === target),
             'command'
         );
     }
