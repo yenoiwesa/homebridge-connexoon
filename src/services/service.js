@@ -1,7 +1,8 @@
 class Service {
-    constructor({ log, service }) {
+    constructor({ log, service, device }) {
         this.log = log;
         this.service = service;
+        this.device = device;
     }
 
     updateState() {
@@ -17,18 +18,16 @@ class Service {
     }
 
     async getHomekitState(state, getStateFn, callback) {
-        this.log.debug(`Get ${this.constructor.name} ${state}`);
+        this.log.debug(`Get ${this.device.name} ${state}`);
 
         try {
             const value = await getStateFn();
 
-            this.log.info(
-                `Get ${this.constructor.name} ${state} success: ${value}`
-            );
+            this.log.info(`Get ${this.device.name} ${state} success: ${value}`);
             callback(null, value);
         } catch (error) {
             this.log.error(
-                `Could not fetch ${this.constructor.name} ${state}`,
+                `Could not fetch ${this.device.name} ${state}`,
                 error
             );
 
@@ -37,22 +36,15 @@ class Service {
     }
 
     async setHomekitState(state, value, setStateFn, callback) {
-        this.log.debug(
-            `Set ${this.constructor.name} ${state} with value: ${value}`
-        );
+        this.log.debug(`Set ${this.device.name} ${state} with value: ${value}`);
 
         try {
             await setStateFn(value);
 
-            this.log.info(
-                `Set ${this.constructor.name} ${state} success: ${value}`
-            );
+            this.log.info(`Set ${this.device.name} ${state} success: ${value}`);
             callback();
         } catch (error) {
-            this.log.error(
-                `Could not set ${this.constructor.name} ${state}`,
-                error
-            );
+            this.log.error(`Could not set ${this.device.name} ${state}`, error);
 
             callback(error);
         }

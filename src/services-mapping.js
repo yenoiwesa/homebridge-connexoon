@@ -1,4 +1,4 @@
-const WindowCovering = require('./services/window-covering-2');
+const WindowCovering = require('./services/window-covering');
 
 module.exports = {
     // maps API device UI Class to a list of services
