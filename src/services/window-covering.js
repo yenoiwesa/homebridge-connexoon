@@ -31,6 +31,14 @@ class WindowCovering extends Service {
         // using the default commands if none have been defined by the user
         this.commands = get(this.config, 'commands', DEFAULT_COMMANDS);
 
+        if (!Array.isArray(this.commands) || this.commands.length < 2) {
+            this.log.error(
+                'The device commands settings must be an array of at least two commands.',
+                `Using default commands instead for ${this.device.name}.`
+            );
+            this.commands = DEFAULT_COMMANDS;
+        }
+
         this.getPosition = cachePromise(
             this.doGetPosition.bind(this),
             POSITIONS_CACHE_MAX_AGE

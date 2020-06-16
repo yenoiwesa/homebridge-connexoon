@@ -44,7 +44,7 @@ class Accessory {
     }
 
     async updateState() {
-        for (const service of this.getServices()) {
+        for (const service of this.services) {
             service.updateState();
         }
     }

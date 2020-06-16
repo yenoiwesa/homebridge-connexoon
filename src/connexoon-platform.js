@@ -1,4 +1,4 @@
-const { get } = require('lodash');
+const { get, isNumber } = require('lodash');
 const OverkizAPI = require('./api/overkiz-api');
 const Accessory = require('./accessories/accessory');
 const ServicesMapping = require('./services-mapping');
@@ -7,6 +7,8 @@ let homebridge;
 
 const PLUGIN_NAME = 'homebridge-connexoon';
 const PLATFORM_NAME = 'Connexoon';
+const POLLING_INTERVAL_CONFIG = 'pollingInterval';
+const POLLING_INTERVAL_DEFAULT = 10; // minutes
 
 const ConnexoonPlatformFactory = (homebridgeInstance) => {
     homebridge = homebridgeInstance;
@@ -59,20 +61,51 @@ class ConnexoonPlatform {
                         accessory.addService(service);
                     }
 
-                    this.platformAccessories.push(
-                        accessory.getHomekitAccessory()
-                    );
+                    this.platformAccessories.push(accessory);
                 } else {
                     this.log.debug(`Ignored device of type ${device.type}`);
                 }
             }
             this.log.debug(`Found ${this.platformAccessories.length} devices`);
+
+            this.initPolling();
         } catch (error) {
             // do nothing in case of error
             this.log.error(error);
         } finally {
-            callback(this.platformAccessories);
+            callback(
+                this.platformAccessories.map((accessory) =>
+                    accessory.getHomekitAccessory()
+                )
+            );
         }
+    }
+
+    initPolling() {
+        const pollingInterval = Math.max(
+            get(this.config, POLLING_INTERVAL_CONFIG, POLLING_INTERVAL_DEFAULT),
+            0
+        );
+
+        if (pollingInterval && isNumber(pollingInterval)) {
+            this.log.info(
+                `Starting polling for Connexoon accessory state every ${pollingInterval} minute(s)`
+            );
+
+            // start polling
+            this.poll(pollingInterval * 60 * 1000);
+        } else {
+            this.log.info(`Polling for Connexoon accessory state disabled`);
+        }
+    }
+
+    poll(interval) {
+        setInterval(() => {
+            this.log.debug(`Polling for Connexoon accessory state`);
+            for (const accessory of this.platformAccessories) {
+                accessory.updateState();
+            }
+        }, interval);
     }
 }
 
