@@ -7,8 +7,11 @@ let homebridge;
 
 const PLUGIN_NAME = 'homebridge-connexoon';
 const PLATFORM_NAME = 'Connexoon';
+const DEVICES_CONFIG = 'devices';
 const POLLING_INTERVAL_CONFIG = 'pollingInterval';
 const POLLING_INTERVAL_DEFAULT = 10; // minutes
+const USE_LISTED_DEVICES_ONLY_CONFIG = 'useListedDevicesOnly';
+const USE_LISTED_DEVICES_ONLY_DEFAULT = false;
 
 const ConnexoonPlatformFactory = (homebridgeInstance) => {
     homebridge = homebridgeInstance;
@@ -35,8 +38,21 @@ class ConnexoonPlatform {
         // retrieve devices defined in overkiz
         try {
             const devices = await this.overkiz.listDevices();
+            const devicesConfig = get(this.config, DEVICES_CONFIG, {});
+            const useListedDevicesOnly = get(
+                this.config,
+                USE_LISTED_DEVICES_ONLY_CONFIG,
+                USE_LISTED_DEVICES_ONLY_DEFAULT
+            );
 
             for (const device of devices) {
+                if (useListedDevicesOnly && !(device.name in devicesConfig)) {
+                    this.log.info(
+                        `Ignored ${device.name} as it is not listed in devices`
+                    );
+                    continue;
+                }
+
                 // unsupported device types are skipped
                 if (device.type in ServicesMapping) {
                     const accessory = new Accessory({
@@ -48,7 +64,7 @@ class ConnexoonPlatform {
                     const serviceClasses = ServicesMapping[device.type];
 
                     // retrieve accessory config
-                    const config = get(this.config, ['devices', device.name]);
+                    const config = get(devicesConfig, device.name);
 
                     for (const ServiceClass of serviceClasses) {
                         const service = new ServiceClass({
