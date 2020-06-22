@@ -1,12 +1,17 @@
-const { get } = require('lodash');
+const { get, isNumber } = require('lodash');
 const OverkizAPI = require('./api/overkiz-api');
-const Accessory = require('./accessory');
+const Accessory = require('./accessories/accessory');
 const ServicesMapping = require('./services-mapping');
 
 let homebridge;
 
 const PLUGIN_NAME = 'homebridge-connexoon';
 const PLATFORM_NAME = 'Connexoon';
+const DEVICES_CONFIG = 'devices';
+const POLLING_INTERVAL_CONFIG = 'pollingInterval';
+const POLLING_INTERVAL_DEFAULT = 10; // minutes
+const USE_LISTED_DEVICES_ONLY_CONFIG = 'useListedDevicesOnly';
+const USE_LISTED_DEVICES_ONLY_DEFAULT = false;
 
 const ConnexoonPlatformFactory = (homebridgeInstance) => {
     homebridge = homebridgeInstance;
@@ -33,8 +38,21 @@ class ConnexoonPlatform {
         // retrieve devices defined in overkiz
         try {
             const devices = await this.overkiz.listDevices();
+            const devicesConfig = get(this.config, DEVICES_CONFIG, {});
+            const useListedDevicesOnly = get(
+                this.config,
+                USE_LISTED_DEVICES_ONLY_CONFIG,
+                USE_LISTED_DEVICES_ONLY_DEFAULT
+            );
 
             for (const device of devices) {
+                if (useListedDevicesOnly && !(device.name in devicesConfig)) {
+                    this.log.info(
+                        `Ignored ${device.name} as it is not listed in devices`
+                    );
+                    continue;
+                }
+
                 // unsupported device types are skipped
                 if (device.type in ServicesMapping) {
                     const accessory = new Accessory({
@@ -46,31 +64,64 @@ class ConnexoonPlatform {
                     const serviceClasses = ServicesMapping[device.type];
 
                     // retrieve accessory config
-                    const config = get(this.config, ['devices', device.name]);
+                    const config = get(devicesConfig, device.name);
 
-                    for (const serviceClass of serviceClasses) {
-                        const service = new serviceClass({
+                    for (const ServiceClass of serviceClasses) {
+                        const service = new ServiceClass({
                             homebridge,
                             log: this.log,
                             device,
                             config,
                         });
 
-                        accessory.addService(service.getHomekitService());
+                        accessory.addService(service);
                     }
 
-                    this.platformAccessories.push(accessory.homekitAccessory);
+                    this.platformAccessories.push(accessory);
                 } else {
                     this.log.debug(`Ignored device of type ${device.type}`);
                 }
             }
             this.log.debug(`Found ${this.platformAccessories.length} devices`);
+
+            this.initPolling();
         } catch (error) {
             // do nothing in case of error
             this.log.error(error);
         } finally {
-            callback(this.platformAccessories);
+            callback(
+                this.platformAccessories.map((accessory) =>
+                    accessory.getHomekitAccessory()
+                )
+            );
         }
+    }
+
+    initPolling() {
+        const pollingInterval = Math.max(
+            get(this.config, POLLING_INTERVAL_CONFIG, POLLING_INTERVAL_DEFAULT),
+            0
+        );
+
+        if (pollingInterval && isNumber(pollingInterval)) {
+            this.log.info(
+                `Starting polling for Connexoon accessory state every ${pollingInterval} minute(s)`
+            );
+
+            // start polling
+            this.poll(pollingInterval * 60 * 1000);
+        } else {
+            this.log.info(`Polling for Connexoon accessory state disabled`);
+        }
+    }
+
+    poll(interval) {
+        setInterval(() => {
+            this.log.debug(`Polling for Connexoon accessory state`);
+            for (const accessory of this.platformAccessories) {
+                accessory.updateState();
+            }
+        }, interval);
     }
 }
 

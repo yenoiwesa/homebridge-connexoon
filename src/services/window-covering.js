@@ -1,14 +1,11 @@
 const { get } = require('lodash');
+const Service = require('./service');
 const { cachePromise } = require('../utils');
-const AbstractService = require('./abstract-service');
 
-let Service;
+const POSITIONS_CACHE_MAX_AGE = 2 * 1000;
+const POSITION_STATE_CHANGING_DURATION = 6 * 1000;
+
 let Characteristic;
-
-const Position = {
-    CLOSED: 0,
-    OPEN: 100,
-};
 
 const Command = {
     OPEN: 'open',
@@ -18,119 +15,155 @@ const Command = {
     MY: 'my',
 };
 
-const DEFAULT_COMMANDS = [
-    { command: Command.OPEN, position: Position.OPEN },
-    { command: Command.MY, position: 50 },
-    { command: Command.CLOSE, position: Position.CLOSED },
-];
+const DEFAULT_COMMANDS = [Command.CLOSE, Command.MY, Command.OPEN];
 
-class WindowCovering extends AbstractService {
+class WindowCovering extends Service {
     constructor({ homebridge, log, device, config }) {
-        super({ homebridge, log, device, config });
+        super({
+            log,
+            service: new homebridge.hap.Service.WindowCovering(),
+            device,
+        });
 
-        // Service and Characteristic are from hap-nodejs
-        Service = homebridge.hap.Service;
-        Characteristic = homebridge.hap.Characteristic;
+        this.device = device;
+        this.config = config;
 
-        this.getPositions = cachePromise(
-            this.doGetPositions.bind(this),
-            2 * 1000
+        // using the default commands if none have been defined by the user
+        this.commands = get(this.config, 'commands', DEFAULT_COMMANDS);
+
+        if (!Array.isArray(this.commands) || this.commands.length < 2) {
+            this.log.error(
+                'The device commands settings must be an array of at least two commands.',
+                `Using default commands instead for ${this.device.name}.`
+            );
+            this.commands = DEFAULT_COMMANDS;
+        }
+
+        this.getPosition = cachePromise(
+            this.doGetPosition.bind(this),
+            POSITIONS_CACHE_MAX_AGE
         ).exec;
 
-        // appending the default commands to the overridden one so that
-        // the overridden command take precedence during evaluation
-        this.commands = get(this.config, 'commands', []).concat(
-            DEFAULT_COMMANDS
-        );
-    }
+        Characteristic = homebridge.hap.Characteristic;
 
-    getHomekitService() {
-        // Window Covering Service
-        const service = new Service.WindowCovering(this.name);
-
-        this.currentPosition = service.getCharacteristic(
+        // Current Position
+        // Percentage, 0 for closed and 100 for open
+        this.currentPosition = this.getCharacteristic(
             Characteristic.CurrentPosition
+        ).on('get', (cb) =>
+            this.getHomekitState(
+                'current position',
+                this.getCurrentPosition.bind(this),
+                cb
+            )
         );
-        this.targetPosition = service.getCharacteristic(
+
+        // Target Position
+        // Percentage, 0 for closed and 100 for open
+        this.targetPositionSteps = parseFloat(
+            (100 / (this.commands.length - 1)).toFixed(2)
+        );
+
+        this.targetPosition = this.getCharacteristic(
             Characteristic.TargetPosition
-        );
-        this.positionState = service.getCharacteristic(
+        )
+            .setProps({
+                minValue: 0,
+                maxValue: 100,
+                minStep: this.targetPositionSteps,
+            })
+            .on('get', (cb) =>
+                this.getHomekitState(
+                    'target position',
+                    this.getTargetPosition.bind(this),
+                    cb
+                )
+            )
+            .on('set', (value, cb) =>
+                this.setHomekitState(
+                    'target position',
+                    value,
+                    this.setTargetPosition.bind(this),
+                    cb
+                )
+            );
+
+        // Position State
+        // DECREASING (0) | INCREASING (1) | STOPPED (2)
+        this.positionState = this.getCharacteristic(
             Characteristic.PositionState
         );
 
-        this.targetPosition
-            .on('get', this.getTargetPosition.bind(this))
-            .on('set', this.setPosition.bind(this));
-
-        this.currentPosition.on('get', this.getCurrentPosition.bind(this));
-
-        // set default value
+        // set initial values
+        this.currentPosition.updateValue(0);
+        this.targetPosition.updateValue(0);
         this.positionState.updateValue(Characteristic.PositionState.STOPPED);
-
-        return service;
     }
 
-    async getTargetPosition(callback) {
-        try {
-            const { target } = await this.getPositions();
+    async doGetPosition() {
+        let lastCommand = await this.device.getLastCommand();
 
-            this.log.debug(`Target position for ${this.name} is ${target}`);
-            callback(null, target);
-        } catch (error) {
-            callback(error);
+        // map UP and DOWN commands to OPEN and CLOSE
+        switch (lastCommand) {
+            case Command.UP:
+                lastCommand = Command.OPEN;
+                break;
+            case Command.DOWN:
+                lastCommand = Command.CLOSE;
+                break;
         }
-    }
 
-    async getCurrentPosition(callback) {
-        try {
-            const { current } = await this.getPositions();
-
-            this.log.debug(`Current position for ${this.name} is ${current}`);
-            callback(null, current);
-        } catch (error) {
-            callback(error);
-        }
-    }
-
-    async doGetPositions() {
-        const lastCommand = await this.device.getLastCommand();
-        const position = this.commandToPosition(lastCommand);
-
-        return { current: position, target: position };
-    }
-
-    async setPosition(value, callback) {
-        const command = this.targetToCommand(value);
-
-        this.log(
-            `Set position to ${value} for ${this.name} with command ${command}`
+        const position = Math.max(
+            this.commands.indexOf(lastCommand) * this.targetPositionSteps,
+            0
         );
 
+        this.currentPosition.updateValue(position);
+        this.targetPosition.updateValue(position);
+
+        return position;
+    }
+
+    async updateState() {
+        this.getPosition();
+    }
+
+    async getCurrentPosition() {
+        // fetch the latest position asynchronously
+        this.getPosition();
+
+        // but return the currently known one straight away
+        return this.currentPosition.value;
+    }
+
+    async getTargetPosition() {
+        // fetch the latest position asynchronously
+        this.getPosition();
+
+        // but return the currently known one straight away
+        return this.targetPosition.value;
+    }
+
+    async setTargetPosition(value) {
+        const command = this.commands[
+            Math.round(value / this.targetPositionSteps)
+        ];
+
         if (command == null) {
-            this.currentPosition.updateValue(value);
-            callback();
             return;
         }
 
         this.updatePositionState(value);
 
-        // return early for Siri to acknowledge asap
-        // even though the command might fail later
-        callback();
+        await this.device.cancelCurrentExecution();
 
-        try {
-            await this.device.cancelCurrentExecution();
+        await this.device.executeCommand(command);
 
-            await this.device.executeCommand(command);
-
-            // set the final requested position after 6s
-            setTimeout(() => {
-                this.currentPosition.updateValue(value);
-                this.updatePositionState(value);
-            }, 6 * 1000);
-        } catch (error) {
-            this.log.error('Failed to execute command');
-        }
+        // set the final requested position after specific delay
+        setTimeout(() => {
+            this.currentPosition.updateValue(value);
+            this.updatePositionState(value);
+        }, POSITION_STATE_CHANGING_DURATION);
     }
 
     updatePositionState(target) {
@@ -146,32 +179,6 @@ class WindowCovering extends AbstractService {
         }
 
         this.positionState.updateValue(positionState);
-    }
-
-    commandToPosition(command) {
-        // map UP and DOWN commands to OPEN and CLOSE
-        switch (command) {
-            case Command.UP:
-                command = Command.OPEN;
-                break;
-            case Command.DOWN:
-                command = Command.CLOSE;
-                break;
-        }
-
-        const configItem = this.commands.find(
-            (item) => item.command === command
-        );
-        return get(configItem, 'position', Position.CLOSED);
-    }
-
-    targetToCommand(target) {
-        // there is no default command, simply ignore values
-        // that are not mapped (won't send anything)
-        return get(
-            this.commands.find((item) => item.position === target),
-            'command'
-        );
     }
 }
 

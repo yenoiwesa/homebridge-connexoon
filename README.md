@@ -8,7 +8,7 @@ A Homebridge plugin providing support for the **Connexoon** (Somfy), **TaHoma** 
 
 This plugin's implementation is inspired by and initially based on Romain Duboc's [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin.
 
-This plugin currently does not support Somfy IO devices, only RTS devices. Use the [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin if you have IO devices in your installation.
+This plugin does not support Somfy IO devices, only RTS devices. Use the [homebridge-tahoma](https://github.com/dubocr/homebridge-tahoma) plugin if you have IO devices in your installation.
 
 # Requirements
 
@@ -59,12 +59,21 @@ To configure homebridge-connexoon, add the `Connexoon` platform to the `platform
 
 The platform can be configured with the following parameters:
 
-| Parameter  | Type   | Default        | Note                                                                                                                                                                                                     |
-| ---------- | ------ | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `username` | String | `null`         | **Required** - Your Somfy / TaHoma / Cozytouch account username.                                                                                                                                         |
-| `password` | String | `null`         | **Required** - Your Somfy / TaHoma / Cozytouch account password.                                                                                                                                         |
-| `service`  | String | `ConnexoonRTS` | Optional - The name of the service used by your hub. Can be: `Cozytouch`, `TaHoma`, `Connexoon` or `ConnexoonRTS`.                                                                                       |
-| `devices`  | Object | `null`         | Optional - A JSON object that allows to configure specific devices, using their name as key and configuration Object as value. Accepted configurations differ from device to device. See sections below. |
+### Required settings
+
+| Parameter  | Type   | Default | Note                                              |
+| ---------- | ------ | ------- | ------------------------------------------------- |
+| `username` | String | `null`  | Your Somfy / TaHoma / Cozytouch account username. |
+| `password` | String | `null`  | Your Somfy / TaHoma / Cozytouch account password. |
+
+### Optional settings
+
+| Parameter              | Type             | Default        | Note                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------- | ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `service`              | String           | `ConnexoonRTS` | The name of the service used by your hub. Can be: `Cozytouch`, `TaHoma`, `Connexoon` or `ConnexoonRTS`.                                                                                                                                                                                                                                                |
+| `devices`              | Object           | `null`         | A JSON object that allows to configure specific devices, using their name as key and configuration Object as value. Accepted configurations differ from device to device. See sections below.                                                                                                                                                          |
+| `pollingInterval`      | Number (minutes) | `10`           | The polling interval for refreshing the platform's accessories state for automations, in minutes. By detault set to 10 minutes, it can be set to `0` to disable polling. Note that the information is refreshed on demand when using the Home app, this configuration is designed to let Homekit automations react to state updates in the background. |
+| `useListedDevicesOnly` | Boolean          | `false`        | If set to `true`, only the devices listed in the `devices` setting will be included in the platform. Other devices will be filtered out. To include a device with no additional configuration, use an empty object as value: `"Bedroom Blind": {}`.                                                                                                    |
 
 ## Device-specific configuration
 
@@ -83,11 +92,7 @@ Screens (such as window blinds) and Roller Shutters accept the `commands` config
 
             "devices": {
                 "Bedroom Blind": {
-                    "commands": [
-                        { "command": "open", "position": 100 },
-                        { "command": "my", "position": 50 },
-                        { "command": "close", "position": 0 }
-                    ]
+                    "commands": ["close", "my", "open"]
                 }
             }
         }
@@ -99,49 +104,38 @@ Note that the above configuration is the default for a Screen, and thus does not
 
 #### `commands` - Array - Optional
 
-An Array of Objects mapping RTS commands (one of `open`, `my`, `close`) to homekit window covering positions (integer from `0` to `100`), and vice versa.
+An Array of Strings mapping RTS commands (one of `open`, `my`, `close`) to homekit window covering positions.
 
 The default value is:
 
 ```json
-[
-    { "command": "open", "position": 100 },
-    { "command": "my", "position": 50 },
-    { "command": "close", "position": 0 }
-]
+["close", "my", "open"]
 ```
 
-It means that for a homekit command of `100` (i.e. **open**), the plugin will send the `open` command to the device.
-If the homekit command received is `0` (i.e. **close**), the plugin will send `close`.
-For a command of exactly `50`, the preferred position command `my` will be sent.
+The above configuration means that the shade will have three 'steps' in the Home app, with the bottom one sending the `close` command, the middle one sending the `my` command and the top one sending the `open` command.
 
-In reverse, when calculating the current state of the device, the plugin will retrieve the last command that was executed and convert it to a homekit position from `0` to `100`.
-With the default configuration, if the last command was `open`, the accessory will show a position of `100` (i.e. **open**) in the Home app, etc.
-
-It is possible to override this configuration so that, for instance, opening the blind from homekit executes the `my` command instead:
+If your shades have been installed in the opposite direction, simply reverse the commands array to:
 
 ```json
-[
-    { "command": "my", "position": 100 },
-    { "command": "open", "position": 100 },
-    { "command": "close", "position": 0 }
-]
+["open", "my", "close"]
 ```
 
-In the configuration above, the `my` command is associated to the homekit position `100` (i.e. **open**). As it is the first item in the array, it will take precedence over the `open` command when the plugin will determine what command to send.
+It is also possible to override the configuration to have only two 'steps' for the shade's closure, and for instance, use the 'my' preferred position as the open state, with:
+
+```json
+["close", "my"]
+```
 
 # Limitation
 
-I have created this homebridge plugin for my personal use, and thus it fits the purpose of my home's installation.
-
-Currently, the platform only supports RTS devices of the following type:
+This platform has been designed to support RTS devices only. As of now, the following device types are supported:
 
 -   **Screen**
 -   **Roller Shutter**
 
 Support for more types may be added as needed.
 
-In addition, since the RTS protocol is one-way, devices status is unknown and must be inferred from the last command that was submitted to the device.
+Since the RTS protocol is one-way, actual closure state is unknown and must be inferred from the last command that was submitted to the device.
 
 # Contribute
 
