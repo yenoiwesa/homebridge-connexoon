@@ -1,7 +1,11 @@
-const { cachePromise } = require('../utils');
+const { get } = require('lodash');
+const { cachePromise, delayPromise } = require('../utils');
 const { Execution } = require('./execution');
 const Device = require('./device');
 const RequestHandler = require('./request-handler');
+
+const COMMAND_EXEC_RETRY_DELAY = 8 * 1000;
+const MAX_COMMAND_EXEC_ATTEMPTS = 5;
 
 class OverkizAPI {
     constructor(config, log) {
@@ -72,8 +76,10 @@ class OverkizAPI {
     }
 
     async executeCommands(label, deviceURL, commands) {
-        const execution = new Execution(label, deviceURL, commands);
+        return this.applyExecution(new Execution(label, deviceURL, commands));
+    }
 
+    async applyExecution(execution, attemptCount = 1) {
         try {
             return await this.handler.sendRequestWithLogin((request) =>
                 request.post({
@@ -83,6 +89,27 @@ class OverkizAPI {
                 })
             );
         } catch (result) {
+            // if the command execution queue is full
+            if (get(result, 'error.errorCode') === 'EXEC_QUEUE_FULL') {
+                // throw an exception if we already retried too many times
+                if (attemptCount >= MAX_COMMAND_EXEC_ATTEMPTS) {
+                    this.log.error(
+                        `Execution queue is full, too many attempts were made (${MAX_COMMAND_EXEC_ATTEMPTS}), giving up`
+                    );
+
+                    throw result;
+                }
+
+                // otherwise, retry the request after a delay
+                this.log.debug(
+                    `Execution queue is full, re-attempting in ${COMMAND_EXEC_RETRY_DELAY} ms`
+                );
+
+                await delayPromise(COMMAND_EXEC_RETRY_DELAY);
+
+                return this.applyExecution(execution, ++attemptCount);
+            }
+
             this.log.error('Failed to exec command', result.error);
 
             throw result;

@@ -157,7 +157,9 @@ class WindowCovering extends Service {
 
         await this.device.cancelCurrentExecution();
 
-        await this.device.executeCommand(command);
+        // do not await for the execution to have been sent as there can
+        // be multiple retries
+        this.device.executeCommand(command);
 
         // set the final requested position after specific delay
         setTimeout(() => {

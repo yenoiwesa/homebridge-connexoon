@@ -33,4 +33,7 @@ const cachePromise = (promiseCallback, cacheDuration) => {
     return { exec, reset, set };
 };
 
-module.exports = { cachePromise };
+const delayPromise = async (delay) =>
+    new Promise((resolve) => setTimeout(resolve, delay));
+
+module.exports = { cachePromise, delayPromise };
