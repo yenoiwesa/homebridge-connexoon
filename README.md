@@ -130,8 +130,16 @@ It is also possible to override the configuration to have only two 'steps' for t
 
 This platform has been designed to support RTS devices only. As of now, the following device types are supported:
 
--   **Screen**
--   **Roller Shutter**
+-   Awning
+-   Curtain
+-   Exterior Screen
+-   Exterior Venetian Blind
+-   Generic
+-   Pergola
+-   Roller Shutter
+-   Screen
+-   Swinging Shutter
+-   VenetianBlind
 
 Support for more types may be added as needed.
 
