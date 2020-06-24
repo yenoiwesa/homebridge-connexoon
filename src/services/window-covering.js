@@ -1,6 +1,7 @@
 const { get } = require('lodash');
+const AbortController = require('abort-controller');
 const Service = require('./service');
-const { cachePromise } = require('../utils');
+const { cachePromise, delayPromise, ABORTED } = require('../utils');
 
 const POSITIONS_CACHE_MAX_AGE = 2 * 1000;
 const POSITION_STATE_CHANGING_DURATION = 6 * 1000;
@@ -145,6 +146,9 @@ class WindowCovering extends Service {
     }
 
     async setTargetPosition(value) {
+        const controller = new AbortController();
+        const abortSignal = controller.signal;
+
         const command = this.commands[
             Math.round(value / this.targetPositionSteps)
         ];
@@ -155,15 +159,41 @@ class WindowCovering extends Service {
 
         this.updatePositionState(value);
 
+        // abort current request if there is one
+        if (this.controller) {
+            this.controller.abort();
+        }
+        // assign the current request controller
+        this.controller = controller;
+
         await this.device.cancelCurrentExecution();
 
-        await this.device.executeCommand(command);
+        if (abortSignal.aborted) {
+            this.log.debug(
+                `Command for ${this.device.name} was aborted before executing`
+            );
+            return;
+        }
+
+        // do not await for the execution to have been sent as there can
+        // be multiple retries
+        this.device.executeCommand(command, abortSignal).catch((error) => {
+            if (error === ABORTED) {
+                this.log.debug(`Command for ${this.device.name} was aborted`);
+            } else {
+                this.log.error(error);
+            }
+        });
 
         // set the final requested position after specific delay
-        setTimeout(() => {
-            this.currentPosition.updateValue(value);
-            this.updatePositionState(value);
-        }, POSITION_STATE_CHANGING_DURATION);
+        delayPromise(POSITION_STATE_CHANGING_DURATION, abortSignal)
+            .then(() => {
+                this.currentPosition.updateValue(value);
+                this.updatePositionState(value);
+            })
+            .catch(() => {
+                // do nothing
+            });
     }
 
     updatePositionState(target) {

@@ -85,11 +85,12 @@ class Device {
         return null;
     }
 
-    async executeCommand(command) {
+    async executeCommand(command, abortSignal) {
         return this.overkiz.executeCommands(
             `${this.name} - ${startCase(command)} - HomeKit`,
             this.id,
-            [new Command(command)]
+            [new Command(command)],
+            abortSignal
         );
     }
 

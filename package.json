@@ -1,6 +1,6 @@
 {
     "name": "homebridge-connexoon",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "A Homebridge plugin providing support for the Connexoon, TaHoma and Cozytouch platforms and accessories.",
     "main": "index.js",
     "files": [
@@ -32,6 +32,7 @@
         "homebridge": ">=0.4.0"
     },
     "dependencies": {
+        "abort-controller": "^3.0.0",
         "lodash": "^4.17.15",
         "request": "^2.88.0",
         "request-promise-native": "^1.0.8"
