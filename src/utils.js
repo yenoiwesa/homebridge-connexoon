@@ -1,3 +1,5 @@
+const ABORTED = Symbol('ABORTED');
+
 const cachePromise = (promiseCallback, cacheDuration) => {
     let promise;
     let timeoutId;
@@ -33,7 +35,22 @@ const cachePromise = (promiseCallback, cacheDuration) => {
     return { exec, reset, set };
 };
 
-const delayPromise = async (delay) =>
-    new Promise((resolve) => setTimeout(resolve, delay));
+const delayPromise = async (delay, abortSignal) =>
+    new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(resolve, delay);
 
-module.exports = { cachePromise, delayPromise };
+        const abort = () => {
+            clearTimeout(timeoutId);
+            reject(ABORTED);
+        };
+
+        if (abortSignal) {
+            if (abortSignal.aborted) {
+                return abort();
+            }
+
+            abortSignal.addEventListener('abort', abort);
+        }
+    });
+
+module.exports = { cachePromise, delayPromise, ABORTED };
