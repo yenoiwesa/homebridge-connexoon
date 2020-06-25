@@ -31,6 +31,8 @@ npm install -g homebridge-connexoon
 
 3. Update your configuration file. See bellow for a sample.
 
+> **Important:** If the plugin fails with login errors, make sure to set the `service` configuration to one that works for your geographical region, as your Somfy account will be linked to only one of the services (servers). See the settings section below.
+
 > **Note:** it is also possible to install this plugin in a local `npm` package instead using the homebridge option `--plugin-path`.
 
 # Configuration
@@ -51,7 +53,8 @@ To configure homebridge-connexoon, add the `Connexoon` platform to the `platform
             "name": "My Connexoon Hub",
 
             "username": "<Somfy account username>",
-            "password": "<Somfy account password>"
+            "password": "<Somfy account password>",
+            "service": "Connexoon"
         }
     ]
 }
@@ -61,19 +64,19 @@ The platform can be configured with the following parameters:
 
 ### Required settings
 
-| Parameter  | Type   | Default | Note                                              |
-| ---------- | ------ | ------- | ------------------------------------------------- |
-| `username` | String | `null`  | Your Somfy / TaHoma / Cozytouch account username. |
-| `password` | String | `null`  | Your Somfy / TaHoma / Cozytouch account password. |
+| Parameter  | Type   | Default        | Note                                                                                                    |
+| ---------- | ------ | -------------- | ------------------------------------------------------------------------------------------------------- |
+| `username` | String | `null`         | Your Somfy / TaHoma / Cozytouch account username.                                                       |
+| `password` | String | `null`         | Your Somfy / TaHoma / Cozytouch account password.                                                       |
+| `service`  | String | `ConnexoonRTS` | The name of the service used by your hub. Can be: `Cozytouch`, `TaHoma`, `Connexoon` or `ConnexoonRTS`. |
 
 ### Optional settings
 
-| Parameter              | Type             | Default        | Note                                                                                                                                                                                                                                                                                                                                                   |
-| ---------------------- | ---------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `service`              | String           | `ConnexoonRTS` | The name of the service used by your hub. Can be: `Cozytouch`, `TaHoma`, `Connexoon` or `ConnexoonRTS`.                                                                                                                                                                                                                                                |
-| `devices`              | Object           | `null`         | A JSON object that allows to configure specific devices, using their name as key and configuration Object as value. Accepted configurations differ from device to device. See sections below.                                                                                                                                                          |
-| `pollingInterval`      | Number (minutes) | `10`           | The polling interval for refreshing the platform's accessories state for automations, in minutes. By detault set to 10 minutes, it can be set to `0` to disable polling. Note that the information is refreshed on demand when using the Home app, this configuration is designed to let Homekit automations react to state updates in the background. |
-| `useListedDevicesOnly` | Boolean          | `false`        | If set to `true`, only the devices listed in the `devices` setting will be included in the platform. Other devices will be filtered out. To include a device with no additional configuration, use an empty object as value: `"Bedroom Blind": {}`.                                                                                                    |
+| Parameter              | Type             | Default | Note                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `devices`              | Object           | `null`  | A JSON object that allows to configure specific devices, using their name as key and configuration Object as value. Accepted configurations differ from device to device. See sections below.                                                                                                                                                          |
+| `pollingInterval`      | Number (minutes) | `10`    | The polling interval for refreshing the platform's accessories state for automations, in minutes. By detault set to 10 minutes, it can be set to `0` to disable polling. Note that the information is refreshed on demand when using the Home app, this configuration is designed to let Homekit automations react to state updates in the background. |
+| `useListedDevicesOnly` | Boolean          | `false` | If set to `true`, only the devices listed in the `devices` setting will be included in the platform. Other devices will be filtered out. To include a device with no additional configuration, use an empty object as value: `"Bedroom Blind": {}`.                                                                                                    |
 
 ## Device-specific configuration
 
