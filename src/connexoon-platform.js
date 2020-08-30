@@ -7,7 +7,7 @@ const PLUGIN_NAME = 'homebridge-connexoon';
 const PLATFORM_NAME = 'Connexoon';
 const DEVICES_CONFIG = 'devices';
 const MINUTE = 60 * 1000;
-const INIT_RETRY_INTERVAL = 1; // minutes
+const INIT_RETRY_INTERVAL = 5; // minutes
 const POLLING_INTERVAL_CONFIG = 'pollingInterval';
 const POLLING_INTERVAL_DEFAULT = 10; // minutes
 const USE_LISTED_DEVICES_ONLY_CONFIG = 'useListedDevicesOnly';
@@ -109,8 +109,7 @@ class ConnexoonPlatform {
             this.initPolling();
         } catch (error) {
             this.log.error(
-                `Could not initialise platform, will retry in ${INIT_RETRY_INTERVAL} min`,
-                error
+                `Could not initialise platform, will retry in ${INIT_RETRY_INTERVAL} min`
             );
             setTimeout(
                 () => this.initAccessories(),
