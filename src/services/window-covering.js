@@ -19,14 +19,13 @@ const Command = {
 const DEFAULT_COMMANDS = [Command.CLOSE, Command.MY, Command.OPEN];
 
 class WindowCovering extends Service {
-    constructor({ homebridge, log, device, config }) {
+    constructor({ api, log, accessory, config }) {
         super({
             log,
-            service: new homebridge.hap.Service.WindowCovering(),
-            device,
+            accessory,
+            serviceType: api.hap.Service.WindowCovering,
         });
 
-        this.device = device;
         this.config = config;
 
         // using the default commands if none have been defined by the user
@@ -35,7 +34,7 @@ class WindowCovering extends Service {
         if (!Array.isArray(this.commands) || this.commands.length < 2) {
             this.log.error(
                 'The device commands settings must be an array of at least two commands.',
-                `Using default commands instead for ${this.device.name}.`
+                `Using default commands instead for ${accessory.name}.`
             );
             this.commands = DEFAULT_COMMANDS;
         }
@@ -45,7 +44,7 @@ class WindowCovering extends Service {
             POSITIONS_CACHE_MAX_AGE
         ).exec;
 
-        Characteristic = homebridge.hap.Characteristic;
+        Characteristic = api.hap.Characteristic;
 
         // Current Position
         // Percentage, 0 for closed and 100 for open
@@ -125,7 +124,7 @@ class WindowCovering extends Service {
         return position;
     }
 
-    async updateState() {
+    async doUpdateState() {
         this.getPosition();
     }
 
