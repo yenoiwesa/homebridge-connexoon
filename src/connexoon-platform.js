@@ -137,37 +137,29 @@ class ConnexoonPlatform {
     async getDevices() {
         const devices = [];
 
-        try {
-            const allDevices = await this.overkiz.listDevices();
-            const useListedDevicesOnly = get(
-                this.config,
-                USE_LISTED_DEVICES_ONLY_CONFIG,
-                USE_LISTED_DEVICES_ONLY_DEFAULT
-            );
+        const allDevices = await this.overkiz.listDevices();
+        const useListedDevicesOnly = get(
+            this.config,
+            USE_LISTED_DEVICES_ONLY_CONFIG,
+            USE_LISTED_DEVICES_ONLY_DEFAULT
+        );
 
-            for (const device of allDevices) {
-                if (
-                    useListedDevicesOnly &&
-                    !(device.name in this.devicesConfig)
-                ) {
-                    this.log.info(
-                        `Ignored ${device.name} as it is not listed in devices`
-                    );
-                    continue;
-                }
-
-                // unsupported device types are skipped
-                if (device.type in ServicesMapping) {
-                    devices.push(device);
-                } else {
-                    this.log.debug(`Ignored device of type ${device.type}`);
-                }
+        for (const device of allDevices) {
+            if (useListedDevicesOnly && !(device.name in this.devicesConfig)) {
+                this.log.info(
+                    `Ignored ${device.name} as it is not listed in devices`
+                );
+                continue;
             }
-            this.log.debug(`Found ${devices.length} devices`);
-        } catch (error) {
-            // do nothing in case of error
-            this.log.error(error);
+
+            // unsupported device types are skipped
+            if (device.type in ServicesMapping) {
+                devices.push(device);
+            } else {
+                this.log.debug(`Ignored device of type ${device.type}`);
+            }
         }
+        this.log.debug(`Found ${devices.length} devices`);
 
         return devices;
     }
