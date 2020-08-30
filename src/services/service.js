@@ -46,6 +46,7 @@ class Service {
 
         if (!this.device) {
             callback('No device is associated to this service');
+            this.log.error(`No device is associated to ${this.accessory.name}`);
             return;
         }
 
@@ -73,6 +74,7 @@ class Service {
 
         if (!this.device) {
             callback('No device is associated to this service');
+            this.log.error(`No device is associated to ${this.accessory.name}`);
             return;
         }
 
