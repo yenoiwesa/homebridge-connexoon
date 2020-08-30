@@ -13,7 +13,7 @@ This plugin does not support Somfy IO devices, only RTS devices. Use the [homebr
 # Requirements
 
 -   **Node** version 11 or above (verify with `node --version`).
--   **Homebridge** version 0.4.0 or above.
+-   **Homebridge** version 1.0.0 or above.
 
 # Installation
 
