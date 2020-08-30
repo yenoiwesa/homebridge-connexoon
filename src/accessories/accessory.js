@@ -1,46 +1,55 @@
+const ServicesMapping = require('../services-mapping');
 const AccessoryInformation = require('../services/accessory-information');
 
 class Accessory {
-    constructor({ homebridge, log, device }) {
-        this.device = device;
+    constructor({ api, log, homekitAccessory, config }) {
+        this.api = api;
         this.log = log;
+        this.accessory = homekitAccessory;
+        this.config = config;
         this.services = [];
 
-        const UUIDGen = homebridge.hap.uuid;
-
-        this.accessory = {
-            name: this.name,
-            displayName: this.name,
-            uuid_base: UUIDGen.generate(this.device.id),
-            services: [],
-            getServices: () => this.getHomekitServices(),
-        };
-
-        this.addService(
+        this.services.push(
             new AccessoryInformation({
-                homebridge,
+                api,
                 log,
-                device,
+                accessory: this,
             })
         );
+
+        const serviceClasses = ServicesMapping[this.context.device.type];
+
+        for (const ServiceClass of serviceClasses) {
+            const service = new ServiceClass({
+                api,
+                log,
+                accessory: this,
+                config,
+            });
+
+            this.services.push(service);
+        }
 
         this.log.debug(`Found ${this.constructor.name} ${this.name}`);
     }
 
-    addService(service) {
-        this.services.push(service);
+    assignDevice(device) {
+        this.device = device;
+
+        // use the most up to date device in the accessory context
+        this.context.device = device.toContext();
     }
 
     getHomekitAccessory() {
         return this.accessory;
     }
 
-    getHomekitServices() {
-        return this.services.map((service) => service.getHomekitService());
+    get context() {
+        return this.accessory.context;
     }
 
     get name() {
-        return this.device.name;
+        return this.context.device.name;
     }
 
     async updateState() {

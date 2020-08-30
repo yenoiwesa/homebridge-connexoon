@@ -27,6 +27,16 @@ class Device {
         return this.json.widget;
     }
 
+    toContext() {
+        return {
+            id: this.id,
+            type: this.type,
+            name: this.name,
+            manufacturer: this.manufacturer,
+            model: this.model,
+        };
+    }
+
     async getCurrentExecution() {
         const currentExecs = await this.overkiz.getCurrentExecutions();
 
