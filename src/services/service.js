@@ -46,6 +46,7 @@ class Service {
 
         if (!this.device) {
             callback('No device is associated to this service');
+            return;
         }
 
         try {
@@ -72,6 +73,7 @@ class Service {
 
         if (!this.device) {
             callback('No device is associated to this service');
+            return;
         }
 
         try {
