@@ -3,7 +3,9 @@ const AbortController = require('abort-controller');
 const Service = require('./service');
 const { cachePromise, delayPromise, ABORTED } = require('../utils');
 
-const POSITIONS_CACHE_MAX_AGE = 2 * 1000;
+const POSITIONS_CACHE_MAX_AGE_KEY = 'positionsCacheMaxAge';
+const POSITIONS_CACHE_MAX_AGE_DEFAULT = 2 * 1000;
+
 const POSITION_STATE_CHANGING_DURATION = 6 * 1000;
 
 let Characteristic;
@@ -39,9 +41,14 @@ class WindowCovering extends Service {
             this.commands = DEFAULT_COMMANDS;
         }
 
+        const positionsCacheMaxAge = get(
+            this.config,
+            POSITIONS_CACHE_MAX_AGE_KEY,
+            POSITIONS_CACHE_MAX_AGE_DEFAULT
+        );
         this.getPosition = cachePromise(
             this.doGetPosition.bind(this),
-            POSITIONS_CACHE_MAX_AGE
+            positionsCacheMaxAge
         ).exec;
 
         Characteristic = api.hap.Characteristic;

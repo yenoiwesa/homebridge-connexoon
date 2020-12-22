@@ -4,8 +4,12 @@ const { Execution } = require('./execution');
 const Device = require('./device');
 const RequestHandler = require('./request-handler');
 
-const CURRENT_EXECUTIONS_CACHE_DURATION = 300;
-const EXECUTIONS_HISTORY_CACHE_DURATION = 2 * 1000;
+const CURRENT_EXECUTIONS_CACHE_MAX_AGE_KEY = 'currentExecutionsCacheMaxAge';
+const CURRENT_EXECUTIONS_CACHE_MAX_AGE_DEFAULT = 300;
+
+const EXECUTIONS_HISTORY_CACHE_MAX_AGE_KEY = 'executionsHistoryCacheMaxAge';
+const EXECUTIONS_HISTORY_CACHE_MAX_AGE_DEFAULT = 2 * 1000;
+
 const COMMAND_EXEC_RETRY_DELAY = 8 * 1000;
 const MAX_COMMAND_EXEC_ATTEMPTS = 5;
 
@@ -14,14 +18,24 @@ class OverkizAPI {
         this.handler = new RequestHandler(config, log);
         this.log = log;
 
+        const currentExecutionsCacheMaxAge = get(
+            config,
+            CURRENT_EXECUTIONS_CACHE_MAX_AGE_KEY,
+            CURRENT_EXECUTIONS_CACHE_MAX_AGE_DEFAULT
+        );
         this.getCurrentExecutions = cachePromise(
             this.doGetCurrentExecutions.bind(this),
-            CURRENT_EXECUTIONS_CACHE_DURATION
+            currentExecutionsCacheMaxAge
         ).exec;
 
+        const executionsHistoryCacheMaxAge = get(
+            config,
+            EXECUTIONS_HISTORY_CACHE_MAX_AGE_KEY,
+            EXECUTIONS_HISTORY_CACHE_MAX_AGE_DEFAULT
+        );
         this.getExecutionsHistory = cachePromise(
             this.doGetExecutionsHistory.bind(this),
-            EXECUTIONS_HISTORY_CACHE_DURATION
+            executionsHistoryCacheMaxAge
         ).exec;
     }
 
