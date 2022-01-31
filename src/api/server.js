@@ -1,7 +1,7 @@
 const SERVER = {
     Cozytouch: 'ha110-1.overkiz.com',
-    TaHoma: 'tahomalink.com',
-    Connexoon: 'tahomalink.com',
+    TaHoma: 'ha101-1.overkiz.com',
+    Connexoon: 'ha101-1.overkiz.com',
     ConnexoonRTS: 'ha201-1.overkiz.com',
 };
 
