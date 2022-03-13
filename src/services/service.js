@@ -53,7 +53,7 @@ class Service {
         try {
             const value = await getStateFn();
 
-            this.log.info(
+            this.log.debug(
                 `Get ${this.accessory.name} ${state} success: ${value}`
             );
             callback(null, value);
@@ -81,7 +81,7 @@ class Service {
         try {
             await setStateFn(value);
 
-            this.log.info(
+            this.log.debug(
                 `Set ${this.accessory.name} ${state} success: ${value}`
             );
             callback();

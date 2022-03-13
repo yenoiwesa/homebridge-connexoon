@@ -184,8 +184,12 @@ class ConnexoonPlatform {
     poll(interval) {
         setInterval(() => {
             this.log.debug(`Polling for Connexoon accessory state`);
-            for (const accessory of this.accessories) {
-                accessory.updateState();
+            try {
+                for (const accessory of this.accessories) {
+                    accessory.updateState();
+                }
+            } catch (error) {
+                this.log.error(`Failed to poll for accessories state`, error);
             }
         }, interval);
     }
