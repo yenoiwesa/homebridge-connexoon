@@ -3,6 +3,7 @@ const SERVER = {
     TaHoma: 'ha101-1.overkiz.com',
     Connexoon: 'ha101-1.overkiz.com',
     ConnexoonRTS: 'ha201-1.overkiz.com',
+    TaHomaUSA: 'ha401-1.overkiz.com',
 };
 
 class Server {
