@@ -64,10 +64,10 @@ The platform can be configured with the following parameters:
 
 ### Required settings
 
-| Parameter  | Type   | Default        | Note                                                                                                    |
-| ---------- | ------ | -------------- | ------------------------------------------------------------------------------------------------------- |
-| `username` | String | `null`         | Your Somfy / TaHoma / Cozytouch account username.                                                       |
-| `password` | String | `null`         | Your Somfy / TaHoma / Cozytouch account password.                                                       |
+| Parameter  | Type   | Default        | Note                                                                                                                 |
+| ---------- | ------ | -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `username` | String | `null`         | Your Somfy / TaHoma / Cozytouch account username.                                                                    |
+| `password` | String | `null`         | Your Somfy / TaHoma / Cozytouch account password.                                                                    |
 | `service`  | String | `ConnexoonRTS` | The name of the service used by your hub. Can be: `Cozytouch`, `TaHoma`, `TaHomaUSA`, `Connexoon` or `ConnexoonRTS`. |
 
 ### Optional settings
