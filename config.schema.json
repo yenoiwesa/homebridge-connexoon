@@ -1,0 +1,73 @@
+{
+    "pluginAlias": "Connexoon",
+    "pluginType": "platform",
+    "singular": true,
+    "headerDisplay": "Homebridge plugin providing support for the Connexoon, TaHoma and Cozytouch platforms and accessories.",
+    "footerDisplay": "Optional 'devices' configuration is not supported via config UI. You must edit the configuration JSON manually.",
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "title": "Plugin name",
+                "description": "Plugin name as displayed in the homebridge log.",
+                "type": "string",
+                "required": true,
+                "default": "Connexoon"
+            },
+            "username": {
+                "title": "Somfy account user name",
+                "description": "Generally an email address. This must be the same as the one used in your Somfy iOS/Android application.",
+                "type": "string",
+                "required": true,
+                "default": ""
+            },
+            "password": {
+                "title": "Somfy account password",
+                "description": "This must be the same as the one used in your Somfy iOS/Android application.",
+                "type": "string",
+                "required": true,
+                "default": ""
+            },
+            "service": {
+                "title": "Somfy service",
+                "description": "Depending on your region/market, the Somfy service will differ. Generally choose the one matching the name of your iOS/Android application.",
+                "type": "string",
+                "required": true,
+                "default": "ConnexoonRTS",
+                "oneOf": [
+                    { "title": "Connexoon RTS", "enum": ["ConnexoonRTS"] },
+                    { "title": "Connexoon", "enum": ["Connexoon"] },
+                    { "title": "Cozytouch", "enum": ["Cozytouch"] },
+                    { "title": "TaHoma", "enum": ["TaHoma"] },
+                    { "title": "TaHoma USA", "enum": ["TaHomaUSA"] }
+                ]
+            },
+            "pollingInterval": {
+                "title": "Polling interval",
+                "description": "The polling interval for refreshing the platform's accessories state for automations, in minutes. By detault set to 10 minutes, it can be set to 0 to disable polling.",
+                "type": "integer",
+                "required": false,
+                "placeholder": 10
+            },
+            "useListedDevicesOnly": {
+                "title": "Use listed devices only",
+                "description": "If set to true, only the devices listed in the devices setting will be included in the platform. Other devices will be filtered out.",
+                "type": "boolean",
+                "required": false,
+                "placeholder": false
+            }
+        }
+    },
+    "layout": [
+        "username",
+        "password",
+        "service",
+        {
+            "type": "section",
+            "expandable": true,
+            "expanded": false,
+            "title": "Advanced Settings",
+            "items": ["name", "pollingInterval", "useListedDevicesOnly"]
+        }
+    ]
+}
