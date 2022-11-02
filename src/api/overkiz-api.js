@@ -6,7 +6,7 @@ const RequestHandler = require('./request-handler');
 
 const CURRENT_EXECUTIONS_CACHE_DURATION = 300;
 const EXECUTIONS_HISTORY_CACHE_DURATION = 2 * 1000;
-const COMMAND_EXEC_RETRY_DELAY = 8 * 1000;
+const COMMAND_EXEC_RETRY_DELAY = 15 * 1000;
 const MAX_COMMAND_EXEC_ATTEMPTS = 5;
 
 class OverkizAPI {
