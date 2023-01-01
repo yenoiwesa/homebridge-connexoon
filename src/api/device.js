@@ -1,5 +1,4 @@
 const { get, startCase } = require('lodash');
-const { Command } = require('./execution');
 
 class Device {
     constructor(json, overkiz) {
@@ -25,6 +24,10 @@ class Device {
 
     get model() {
         return this.json.widget;
+    }
+
+    get isOGP() {
+        return this.json.deviceURL.startsWith('ogp://');
     }
 
     toContext() {
@@ -97,9 +100,9 @@ class Device {
 
     async executeCommand(command, abortSignal) {
         return this.overkiz.executeCommands(
-            `${this.name} - ${startCase(command)} - HomeKit`,
+            `${this.name} - ${startCase(command.name)} - HomeKit`,
             this.id,
-            [new Command(command)],
+            [command],
             abortSignal
         );
     }
