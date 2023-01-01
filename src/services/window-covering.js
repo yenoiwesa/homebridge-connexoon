@@ -1,6 +1,7 @@
 const { get } = require('lodash');
 const AbortController = require('abort-controller');
 const Service = require('./service');
+const { Command } = require('../api/execution');
 const { cachePromise, delayPromise, ABORTED } = require('../utils');
 
 const POSITIONS_CACHE_MAX_AGE = 2 * 1000;
@@ -8,15 +9,20 @@ const POSITION_STATE_CHANGING_DURATION = 6 * 1000;
 
 let Characteristic;
 
-const Command = {
+const CommandNames = {
     OPEN: 'open',
     CLOSE: 'close',
     UP: 'up',
     DOWN: 'down',
     MY: 'my',
+    GO_TO_ALIAS: 'goToAlias',
 };
 
-const DEFAULT_COMMANDS = [Command.CLOSE, Command.MY, Command.OPEN];
+const DEFAULT_COMMANDS = [
+    CommandNames.CLOSE,
+    CommandNames.MY,
+    CommandNames.OPEN,
+];
 
 class WindowCovering extends Service {
     constructor({ api, log, accessory, config }) {
@@ -103,13 +109,17 @@ class WindowCovering extends Service {
     async doGetPosition() {
         let lastCommand = await this.device.getLastCommand();
 
-        // map UP and DOWN commands to OPEN and CLOSE
+        // map up and down commands to open and close
+        // and goToAlias to my
         switch (lastCommand) {
-            case Command.UP:
-                lastCommand = Command.OPEN;
+            case CommandNames.UP:
+                lastCommand = CommandNames.OPEN;
                 break;
-            case Command.DOWN:
-                lastCommand = Command.CLOSE;
+            case CommandNames.DOWN:
+                lastCommand = CommandNames.CLOSE;
+                break;
+            case CommandNames.GO_TO_ALIAS:
+                lastCommand = CommandNames.MY;
                 break;
         }
 
@@ -148,11 +158,11 @@ class WindowCovering extends Service {
         const controller = new AbortController();
         const abortSignal = controller.signal;
 
-        const command = this.commands[
+        const commandName = this.commands[
             Math.round(value / this.targetPositionSteps)
         ];
 
-        if (command == null) {
+        if (commandName == null) {
             return;
         }
 
@@ -172,6 +182,14 @@ class WindowCovering extends Service {
                 `Command for ${this.device.name} was aborted before executing`
             );
             return;
+        }
+
+        let command;
+        // if sending the my command for an OGP device, send it as goToAlias instead
+        if (commandName === CommandNames.MY && this.device.isOGP) {
+            command = new Command(CommandNames.GO_TO_ALIAS, ['1']);
+        } else {
+            command = new Command(commandName);
         }
 
         // do not await for the execution to have been sent as there can
