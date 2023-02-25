@@ -10,6 +10,7 @@ module.exports = {
     Pergola: [WindowCovering],
     RollerShutter: [WindowCovering],
     Screen: [WindowCovering],
+    Shutter: [WindowCovering],
     SwingingShutter: [WindowCovering],
     VenetianBlind: [WindowCovering],
 };
